@@ -106,6 +106,11 @@
             background: linear-gradient(135deg, rgba(77, 159, 220, 0.05) 0%, rgba(26, 58, 95, 0.05) 100%);
             box-shadow: 0 4px 12px rgba(77, 159, 220, 0.15);
         }
+        .service-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
 
         .badge-folio {
             background: var(--primary-dark);
@@ -202,10 +207,14 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--primary-medium);
         }
+
+        .service-locked {
+            border-left: 4px solid var(--accent-blue);
+            background: rgba(77, 159, 220, 0.05);
+        }
     </style>
 </head>
 <body class="min-h-screen p-4">
-    <!-- Header fijo -->
     <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-b border-gray-200 shadow-sm">
         <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-4">
@@ -228,7 +237,6 @@
     </header>
 
     <main class="max-w-4xl mx-auto pt-28 pb-16 px-4 space-y-6">
-        <!-- Buscador de folio -->
         <div class="glass-panel p-6">
             <div class="section-title">
                 <i class="fas fa-search"></i> BUSCAR COTIZACIÓN
@@ -242,7 +250,6 @@
             <div id="folioSearchResult" class="text-sm text-gray-500 mt-2 text-center"></div>
         </div>
 
-        <!-- Banner de cotización cargada -->
         <div id="remoteQuoteBanner" class="hidden glass-panel p-6 border-l-4 border-l-[#4d9fdc]">
             <div class="flex items-start gap-4">
                 <i class="fas fa-cloud-download-alt text-2xl text-[#4d9fdc]"></i>
@@ -253,7 +260,6 @@
             </div>
         </div>
 
-        <!-- Datos del cliente en grid -->
         <div class="glass-panel p-6">
             <div class="section-title">
                 <i class="fas fa-user-tie"></i> DATOS DEL CLIENTE
@@ -274,7 +280,6 @@
             </div>
         </div>
 
-        <!-- Diagnóstico técnico en tarjeta -->
         <div class="glass-panel p-6">
             <div class="section-title">
                 <i class="fas fa-stethoscope"></i> DIAGNÓSTICO TÉCNICO
@@ -299,14 +304,13 @@
             </div>
         </div>
 
-        <!-- Materiales y conceptos -->
         <div class="glass-panel p-6">
             <div class="flex justify-between items-center mb-4">
                 <div class="section-title">
                     <i class="fas fa-layer-group"></i> CONCEPTOS
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="loadMaterialsFromCloud()" class="btn-secondary text-sm py-2 px-4">
+                    <button onclick="loadMaterialsFromCloud()" id="suggestMaterialsBtn" class="btn-secondary text-sm py-2 px-4">
                         <i class="fas fa-cloud-download-alt mr-1"></i> Sugerir
                     </button>
                     <button onclick="addItem()" class="btn-primary text-sm py-2 px-4">
@@ -315,7 +319,6 @@
                 </div>
             </div>
 
-            <!-- Buscador de materiales -->
             <div class="relative mb-4">
                 <input type="text" id="materialSearch" placeholder="Buscar material..." class="input-field w-full pl-10" onkeyup="filterMaterials()">
                 <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
@@ -323,7 +326,6 @@
             
             <div id="searchResults" class="hidden absolute z-10 bg-white border border-gray-200 rounded-xl max-h-48 overflow-y-auto w-96 shadow-2xl"></div>
             
-            <!-- Tabla de conceptos -->
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead>
@@ -336,12 +338,10 @@
                         </tr>
                     </thead>
                     <tbody id="items-container">
-                        <!-- Los items se renderizan dinámicamente -->
                     </tbody>
                 </table>
             </div>
 
-            <!-- Mano de obra e IVA -->
             <div class="grid grid-cols-2 gap-4 mt-6">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Mano de obra ($)</label>
@@ -354,7 +354,6 @@
             </div>
         </div>
 
-        <!-- Totales -->
         <div class="total-display">
             <div class="flex justify-between items-center text-sm">
                 <span class="text-gray-500">SUBTOTAL</span>
@@ -375,9 +374,8 @@
             </div>
         </div>
 
-        <!-- Botones de acción -->
         <div class="flex flex-col md:flex-row gap-3">
-            <button onclick="generatePDF()" class="btn-primary flex-1 py-4 text-lg">
+            <button onclick="generatePDF()" id="generatePdfBtn" class="btn-primary flex-1 py-4 text-lg">
                 <i class="fas fa-file-pdf mr-2"></i> GENERAR PDF PREMIUM
             </button>
             <button onclick="shareWhatsApp()" class="btn-secondary flex-1 py-4 text-lg">
@@ -389,7 +387,6 @@
         </div>
     </main>
 
-    <!-- Modal PDF -->
     <div id="pdfModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl overflow-hidden w-full max-w-4xl h-[90vh] flex flex-col">
             <div class="flex-1 overflow-auto" id="pdfContent">
@@ -412,14 +409,14 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-2xl shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center space-x-3">
         <i class="fas fa-circle-check text-[#4d9fdc] text-lg"></i>
         <span id="toastMsg" class="text-sm font-semibold">Listo</span>
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyMaKoJtApAarP-jTEFz5S2ICZphphdnvx5LTUF4gNHpduxFJjV5NSPjR7_eNWgY-Ou/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJA9NRV4hiFOznVK7M4ftB0qFVD3G1_lxpn3N5htlVsQ5S6d50KCg60Xg3v1uovZSE/exec';
+        const API_TOKEN = 'MULTI2024SP_SECRET_TOKEN_CAMBIAR_EN_PRODUCCION';
         
         const serviceFamily = {
             'minisplit': 'Climas',
@@ -430,12 +427,23 @@
             'general': 'General'
         };
 
-        let currentService = 'minisplit';
+        // Keywords para detección robusta de servicio
+        const serviceKeywords = {
+            'minisplit': ['clima', 'minisplit', 'aire', 'refrigeracion', 'fri', 'calor', 'hvac'],
+            'plomeria': ['plomer', 'agua', 'drenaj', 'tuber', 'fuga', 'caño', 'wc', 'baño'],
+            'electricidad': ['electri', 'luz', 'corto', 'circuito', 'tablero', 'cable', 'instalacion'],
+            'soldadura': ['solda', 'herreria', 'porton', 'rej', 'estructura', 'metal', 'hierro'],
+            'camaras': ['cctv', 'camara', 'seguridad', 'video', 'vigilancia', 'ip', 'nvr'],
+            'general': ['general', 'mantenimiento', 'pintura', 'tablaroca', 'impermeabilizacion']
+        };
+
+        let currentService = '';
         let items = [];
         let materialDatabase = [];
         let currentFolio = null;
         let cotizacionData = null;
         let pdfDoc = null;
+        let folioService = null; // Servicio original del folio
 
         function updateClock() {
             const now = new Date();
@@ -444,6 +452,53 @@
         }
         setInterval(updateClock, 1000);
         updateClock();
+
+        // ===== DETECCIÓN ROBUSTA DE SERVICIO =====
+        function detectServiceFromText(text) {
+            if (!text) return 'general';
+            const lowerText = text.toLowerCase();
+            
+            for (const [service, keywords] of Object.entries(serviceKeywords)) {
+                for (const keyword of keywords) {
+                    if (lowerText.includes(keyword)) {
+                        return service;
+                    }
+                }
+            }
+            return 'general';
+        }
+
+        // ===== BLOQUEO DE SERVICIO SI HAY FOLIO =====
+        function updateServiceLock() {
+            const serviceButtons = document.querySelectorAll('.service-card');
+            const suggestBtn = document.getElementById('suggestMaterialsBtn');
+            
+            if (currentFolio && folioService) {
+                // Bloquear botones de servicio
+                serviceButtons.forEach(btn => {
+                    btn.classList.add('disabled');
+                });
+                // Deshabilitar botón sugerir si no coincide el servicio
+                if (suggestBtn && currentService !== folioService) {
+                    suggestBtn.disabled = true;
+                    suggestBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    suggestBtn.title = 'Servicio bloqueado por el folio cargado';
+                } else {
+                    suggestBtn.disabled = false;
+                    suggestBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    suggestBtn.title = '';
+                }
+            } else {
+                // Sin folio, servicios disponibles
+                serviceButtons.forEach(btn => {
+                    btn.classList.remove('disabled');
+                });
+                if (suggestBtn) {
+                    suggestBtn.disabled = false;
+                    suggestBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
 
         async function loadFolioFromInput() {
             const folio = document.getElementById('folioSearchInput').value.trim();
@@ -497,7 +552,17 @@
                         document.getElementById('clientPhone').value = cotizacionData.Telefono || '';
                         document.getElementById('clientAddress').value = cotizacionData.Direccion || '';
                         
-                        // Cargar diagnóstico si existe
+                        // Detectar servicio del folio
+                        if (cotizacionData.Servicio) {
+                            folioService = detectServiceFromText(cotizacionData.Servicio);
+                            selectService(folioService);
+                            currentService = folioService;
+                            
+                            // Cargar materiales sugeridos automáticamente
+                            setTimeout(() => loadMaterialsFromCloud(), 500);
+                        }
+                        
+                        // Cargar diagnóstico
                         if (cotizacionData.Respuesta1) {
                             document.getElementById('diagnosticoSintoma').textContent = cotizacionData.Respuesta1;
                         }
@@ -521,9 +586,17 @@
                     console.error('Error:', error);
                 }
             }
+            
+            // Actualizar bloqueo de servicios
+            updateServiceLock();
         }
 
         async function loadMaterialsFromCloud() {
+            if (!currentService) {
+                showToast('Selecciona un servicio primero', 'error');
+                return;
+            }
+            
             const familia = serviceFamily[currentService];
             if (!familia) return;
             
@@ -553,6 +626,17 @@
             }
         }
 
+        function selectService(service) {
+            currentService = service;
+            document.querySelectorAll('.service-card').forEach(el => {
+                el.classList.remove('active');
+            });
+            const btn = document.getElementById(`svc-${service}`);
+            if (btn) {
+                btn.classList.add('active');
+            }
+        }
+
         function renderItems() {
             const container = document.getElementById('items-container');
             if (items.length === 0) {
@@ -561,18 +645,22 @@
             }
             let html = '';
             items.forEach((item, index) => {
+                // Valores por defecto para evitar empalmes
+                const qty = item.qty || 1;
+                const price = item.price || 0;
+                
                 html += `
                 <tr class="border-b border-gray-100">
                     <td class="py-3 px-2">
                         <input type="text" value="${item.desc.replace(/"/g, '&quot;')}" onchange="updateItemDesc(${index}, this.value)" class="w-full bg-transparent border-0 focus:ring-0 text-sm">
                     </td>
                     <td class="py-3 px-2">
-                        <input type="number" min="1" value="${item.qty}" onchange="updateItemQty(${index}, this.value)" class="w-20 text-center bg-gray-50 border border-gray-200 rounded-lg py-1 px-2 text-sm">
+                        <input type="number" min="1" value="${qty}" onchange="updateItemQty(${index}, this.value)" class="w-20 text-center bg-gray-50 border border-gray-200 rounded-lg py-1 px-2 text-sm">
                     </td>
                     <td class="py-3 px-2">
-                        <input type="number" min="0" step="0.01" value="${item.price}" onchange="updateItemPrice(${index}, this.value)" class="w-32 text-right bg-gray-50 border border-gray-200 rounded-lg py-1 px-2 text-sm">
+                        <input type="number" min="0" step="0.01" value="${price}" onchange="updateItemPrice(${index}, this.value)" class="w-32 text-right bg-gray-50 border border-gray-200 rounded-lg py-1 px-2 text-sm">
                     </td>
-                    <td class="py-3 px-2 text-right font-semibold">$${(item.qty * item.price).toFixed(2)}</td>
+                    <td class="py-3 px-2 text-right font-semibold">$${(qty * price).toFixed(2)}</td>
                     <td class="py-3 px-2 text-center">
                         <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-700">
                             <i class="fas fa-trash-alt"></i>
@@ -590,8 +678,16 @@
         };
 
         window.updateItemDesc = (index, val) => { items[index].desc = val; calculateTotal(); };
-        window.updateItemQty = (index, val) => { items[index].qty = Math.max(1, parseInt(val) || 1); renderItems(); calculateTotal(); };
-        window.updateItemPrice = (index, val) => { items[index].price = parseFloat(val) || 0; renderItems(); calculateTotal(); };
+        window.updateItemQty = (index, val) => { 
+            items[index].qty = Math.max(1, parseInt(val) || 1); 
+            renderItems(); 
+            calculateTotal(); 
+        };
+        window.updateItemPrice = (index, val) => { 
+            items[index].price = parseFloat(val) || 0; 
+            renderItems(); 
+            calculateTotal(); 
+        };
         window.removeItem = (index) => { items.splice(index, 1); renderItems(); calculateTotal(); };
 
         window.filterMaterials = function() {
@@ -638,10 +734,10 @@
 
         window.calculateTotal = () => {
             const labor = parseFloat(document.getElementById('laborCost').value) || 0;
-            const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+            const taxRate = parseFloat(document.getElementById('taxRate').value) || 16;
             
             let subtotal = 0;
-            items.forEach(i => subtotal += (i.qty * i.price));
+            items.forEach(i => subtotal += ((i.qty || 1) * (i.price || 0)));
             
             const tax = subtotal * (taxRate / 100);
             const total = subtotal + tax + labor;
@@ -654,8 +750,13 @@
             return { subtotal, tax, labor, total, taxRate };
         };
 
-        // Generador de PDF Premium
         window.generatePDF = () => {
+            // Validar que jsPDF esté cargado
+            if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+                showToast('Error: Librería PDF no cargada', 'error');
+                return;
+            }
+            
             const client = document.getElementById('clientName').value.trim() || 'Cliente';
             const { subtotal, tax, labor, total, taxRate } = calculateTotal();
             const folio = currentFolio || 'COT-SIN-FOLIO';
@@ -663,174 +764,180 @@
             const address = document.getElementById('clientAddress').value || '';
             const phone = document.getElementById('clientPhone').value || '';
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-            // Fondo blanco limpio
-            doc.setFillColor(255, 255, 255);
-            doc.rect(0, 0, 210, 297, 'F');
+                // Fondo blanco limpio
+                doc.setFillColor(255, 255, 255);
+                doc.rect(0, 0, 210, 297, 'F');
 
-            // Borde sutil
-            doc.setDrawColor(77, 159, 220);
-            doc.setLineWidth(0.3);
-            doc.rect(10, 10, 190, 277);
+                // Borde sutil
+                doc.setDrawColor(77, 159, 220);
+                doc.setLineWidth(0.3);
+                doc.rect(10, 10, 190, 277);
 
-            // Header con logo y folio
-            doc.setFillColor(10, 25, 41);
-            doc.rect(10, 10, 190, 25, 'F');
-            
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.text('MULTISERVICIOS SP', 15, 25);
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Soluciones Técnicas Profesionales', 15, 32);
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`FOLIO: ${folio}`, 170, 25, { align: 'right' });
-            doc.setFont('helvetica', 'normal');
-            doc.text(fecha, 170, 32, { align: 'right' });
+                // Header con logo y folio
+                doc.setFillColor(10, 25, 41);
+                doc.rect(10, 10, 190, 25, 'F');
+                
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text('MULTISERVICIOS SP', 15, 25);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Soluciones Técnicas Profesionales', 15, 32);
+                
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`FOLIO: ${folio}`, 170, 25, { align: 'right' });
+                doc.setFont('helvetica', 'normal');
+                doc.text(fecha, 170, 32, { align: 'right' });
 
-            // Datos del cliente
-            doc.setTextColor(10, 25, 41);
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('DATOS DEL CLIENTE', 15, 50);
-            
-            doc.setDrawColor(77, 159, 220);
-            doc.setLineWidth(0.2);
-            doc.line(15, 52, 195, 52);
+                // Datos del cliente
+                doc.setTextColor(10, 25, 41);
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text('DATOS DEL CLIENTE', 15, 50);
+                
+                doc.setDrawColor(77, 159, 220);
+                doc.setLineWidth(0.2);
+                doc.line(15, 52, 195, 52);
 
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Cliente: ${client}`, 15, 62);
-            if (phone) doc.text(`Teléfono: ${phone}`, 15, 69);
-            if (address) doc.text(`Dirección: ${address}`, 15, 76);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Cliente: ${client}`, 15, 62);
+                if (phone) doc.text(`Teléfono: ${phone}`, 15, 69);
+                if (address) doc.text(`Dirección: ${address}`, 15, 76);
 
-            // Diagnóstico técnico
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('DIAGNÓSTICO TÉCNICO', 15, 92);
-            doc.line(15, 94, 195, 94);
+                // Diagnóstico técnico
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text('DIAGNÓSTICO TÉCNICO', 15, 92);
+                doc.line(15, 94, 195, 94);
 
-            // Grid de diagnóstico
-            doc.setFillColor(245, 247, 250);
-            doc.roundedRect(15, 98, 85, 20, 3, 3, 'F');
-            doc.roundedRect(110, 98, 85, 20, 3, 3, 'F');
-            doc.roundedRect(15, 123, 85, 20, 3, 3, 'F');
-            doc.roundedRect(110, 123, 85, 20, 3, 3, 'F');
+                // Grid de diagnóstico
+                doc.setFillColor(245, 247, 250);
+                doc.roundedRect(15, 98, 85, 20, 3, 3, 'F');
+                doc.roundedRect(110, 98, 85, 20, 3, 3, 'F');
+                doc.roundedRect(15, 123, 85, 20, 3, 3, 'F');
+                doc.roundedRect(110, 123, 85, 20, 3, 3, 'F');
 
-            doc.setTextColor(77, 159, 220);
-            doc.setFontSize(8);
-            doc.text('SÍNTOMA', 20, 106);
-            doc.text('UBICACIÓN', 115, 106);
-            doc.text('URGENCIA', 20, 131);
-            doc.text('EQUIPOS', 115, 131);
+                doc.setTextColor(77, 159, 220);
+                doc.setFontSize(8);
+                doc.text('SÍNTOMA', 20, 106);
+                doc.text('UBICACIÓN', 115, 106);
+                doc.text('URGENCIA', 20, 131);
+                doc.text('EQUIPOS', 115, 131);
 
-            doc.setTextColor(10, 25, 41);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.text(document.getElementById('diagnosticoSintoma').textContent, 20, 113);
-            doc.text(document.getElementById('diagnosticoUbicacion').textContent, 115, 113);
-            doc.text(document.getElementById('diagnosticoUrgencia').textContent, 20, 138);
-            doc.text(document.getElementById('diagnosticoEquipos').textContent, 115, 138);
+                doc.setTextColor(10, 25, 41);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text(document.getElementById('diagnosticoSintoma').textContent, 20, 113);
+                doc.text(document.getElementById('diagnosticoUbicacion').textContent, 115, 113);
+                doc.text(document.getElementById('diagnosticoUrgencia').textContent, 20, 138);
+                doc.text(document.getElementById('diagnosticoEquipos').textContent, 115, 138);
 
-            // Tabla de conceptos
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('CONCEPTOS', 15, 158);
-            doc.line(15, 160, 195, 160);
+                // Tabla de conceptos
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text('CONCEPTOS', 15, 158);
+                doc.line(15, 160, 195, 160);
 
-            const bodyRows = items.map(i => [
-                i.desc,
-                i.qty.toString(),
-                '$' + i.price.toFixed(2),
-                '$' + (i.qty * i.price).toFixed(2)
-            ]);
-            
-            if (labor > 0) {
-                bodyRows.push(['Mano de obra profesional', '1', '$' + labor.toFixed(2), '$' + labor.toFixed(2)]);
+                const bodyRows = items.map(i => [
+                    i.desc,
+                    i.qty.toString(),
+                    '$' + i.price.toFixed(2),
+                    '$' + (i.qty * i.price).toFixed(2)
+                ]);
+                
+                if (labor > 0) {
+                    bodyRows.push(['Mano de obra profesional', '1', '$' + labor.toFixed(2), '$' + labor.toFixed(2)]);
+                }
+
+                doc.autoTable({
+                    startY: 165,
+                    head: [['Descripción', 'Cant.', 'Precio Unit.', 'Importe']],
+                    body: bodyRows,
+                    theme: 'plain',
+                    headStyles: { 
+                        fillColor: [10, 25, 41],
+                        textColor: [255,255,255],
+                        fontStyle: 'bold',
+                        fontSize: 9,
+                        halign: 'left'
+                    },
+                    bodyStyles: { 
+                        textColor: [10, 25, 41],
+                        fontSize: 9,
+                        lineColor: [230, 230, 230],
+                        lineWidth: 0.1
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 80 },
+                        1: { cellWidth: 25, halign: 'center' },
+                        2: { cellWidth: 35, halign: 'right' },
+                        3: { cellWidth: 35, halign: 'right' }
+                    },
+                    margin: { left: 15, right: 15 },
+                    alternateRowStyles: { fillColor: [245, 247, 250] }
+                });
+
+                const finalY = doc.previousAutoTable.finalY + 10;
+
+                // Totales
+                doc.setFillColor(245, 247, 250);
+                doc.roundedRect(120, finalY - 5, 70, 30, 3, 3, 'F');
+                doc.setDrawColor(77, 159, 220);
+                doc.roundedRect(120, finalY - 5, 70, 30, 3, 3, 'S');
+
+                doc.setTextColor(10, 25, 41);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Subtotal:', 125, finalY + 2);
+                doc.text('$' + subtotal.toFixed(2), 185, finalY + 2, { align: 'right' });
+                
+                doc.text(`IVA (${taxRate}%):`, 125, finalY + 9);
+                doc.text('$' + tax.toFixed(2), 185, finalY + 9, { align: 'right' });
+                
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(77, 159, 220);
+                doc.text('TOTAL:', 125, finalY + 22);
+                doc.text('$' + total.toFixed(2), 185, finalY + 22, { align: 'right' });
+
+                // Términos y firmas
+                doc.setDrawColor(200, 200, 200);
+                doc.line(15, 240, 195, 240);
+                
+                doc.setTextColor(100, 100, 100);
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.text('Términos y condiciones:', 15, 250);
+                doc.text('• Esta cotización es válida por 15 días.', 15, 257);
+                doc.text('• Se requiere 50% de anticipo para iniciar los trabajos.', 15, 263);
+                doc.text('• Los precios incluyen IVA (excepto donde se indique).', 15, 269);
+                
+                // Firmas
+                doc.text('_________________________', 35, 280);
+                doc.text('Técnico responsable', 40, 287, { align: 'center' });
+                
+                doc.text('_________________________', 135, 280);
+                doc.text('Firma del cliente', 150, 287, { align: 'center' });
+
+                // Número de página
+                doc.setFontSize(7);
+                doc.text('Documento generado por Multiservicios SP - Sistema Profesional', 105, 295, { align: 'center' });
+
+                pdfDoc = doc;
+                document.getElementById('pdfContent').innerHTML = `<iframe src="${doc.output('datauristring')}" width="100%" height="100%" style="border: none;"></iframe>`;
+                document.getElementById('pdfModal').classList.add('active');
+                
+            } catch (error) {
+                console.error('Error generando PDF:', error);
+                showToast('Error al generar PDF: ' + error.message, 'error');
             }
-
-            doc.autoTable({
-                startY: 165,
-                head: [['Descripción', 'Cant.', 'Precio Unit.', 'Importe']],
-                body: bodyRows,
-                theme: 'plain',
-                headStyles: { 
-                    fillColor: [10, 25, 41],
-                    textColor: [255,255,255],
-                    fontStyle: 'bold',
-                    fontSize: 9,
-                    halign: 'left'
-                },
-                bodyStyles: { 
-                    textColor: [10, 25, 41],
-                    fontSize: 9,
-                    lineColor: [230, 230, 230],
-                    lineWidth: 0.1
-                },
-                columnStyles: {
-                    0: { cellWidth: 80 },
-                    1: { cellWidth: 25, halign: 'center' },
-                    2: { cellWidth: 35, halign: 'right' },
-                    3: { cellWidth: 35, halign: 'right' }
-                },
-                margin: { left: 15, right: 15 },
-                alternateRowStyles: { fillColor: [245, 247, 250] }
-            });
-
-            const finalY = doc.previousAutoTable.finalY + 10;
-
-            // Totales
-            doc.setFillColor(245, 247, 250);
-            doc.roundedRect(120, finalY - 5, 70, 30, 3, 3, 'F');
-            doc.setDrawColor(77, 159, 220);
-            doc.roundedRect(120, finalY - 5, 70, 30, 3, 3, 'S');
-
-            doc.setTextColor(10, 25, 41);
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Subtotal:', 125, finalY + 2);
-            doc.text('$' + subtotal.toFixed(2), 185, finalY + 2, { align: 'right' });
-            
-            doc.text(`IVA (${taxRate}%):`, 125, finalY + 9);
-            doc.text('$' + tax.toFixed(2), 185, finalY + 9, { align: 'right' });
-            
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(77, 159, 220);
-            doc.text('TOTAL:', 125, finalY + 22);
-            doc.text('$' + total.toFixed(2), 185, finalY + 22, { align: 'right' });
-
-            // Términos y firmas
-            doc.setDrawColor(200, 200, 200);
-            doc.line(15, 240, 195, 240);
-            
-            doc.setTextColor(100, 100, 100);
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Términos y condiciones:', 15, 250);
-            doc.text('• Esta cotización es válida por 15 días.', 15, 257);
-            doc.text('• Se requiere 50% de anticipo para iniciar los trabajos.', 15, 263);
-            doc.text('• Los precios incluyen IVA (excepto donde se indique).', 15, 269);
-            
-            // Firmas
-            doc.text('_________________________', 35, 280);
-            doc.text('Técnico responsable', 40, 287, { align: 'center' });
-            
-            doc.text('_________________________', 135, 280);
-            doc.text('Firma del cliente', 150, 287, { align: 'center' });
-
-            // Número de página
-            doc.setFontSize(7);
-            doc.text('Documento generado por Multiservicios SP - Sistema Profesional', 105, 295, { align: 'center' });
-
-            pdfDoc = doc;
-            document.getElementById('pdfContent').innerHTML = `<iframe src="${doc.output('datauristring')}" width="100%" height="100%" style="border: none;"></iframe>`;
-            document.getElementById('pdfModal').classList.add('active');
         };
 
         window.closePDF = () => document.getElementById('pdfModal').classList.remove('active');
@@ -852,7 +959,7 @@
             
             let msg = `*COTIZACIÓN MULTISERVICIOS SP*\n`;
             msg += `👤 Cliente: ${client}\n`;
-            msg += `🔨 Servicio: ${serviceFamily[currentService]}\n`;
+            msg += `🔨 Servicio: ${serviceFamily[currentService] || 'General'}\n`;
             if(currentFolio) msg += `📋 Folio: ${currentFolio}\n`;
             msg += `💰 Total: $${total.toFixed(2)}`;
             
@@ -864,7 +971,41 @@
                 showToast('No hay folio activo', 'error');
                 return;
             }
-            showToast('Funcionalidad en desarrollo', 'info');
+
+            const nuevoEstado = prompt('Ingresa el nuevo estado (NUEVA, EN PROCESO, FINALIZADO, PENDIENTE):');
+            if (!nuevoEstado) return;
+
+            const notas = prompt('Agrega notas (opcional):') || '';
+
+            showToast('Actualizando estado...');
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'updateStatus',
+                        folio: currentFolio,
+                        estado: nuevoEstado,
+                        notas: notas,
+                        token: API_TOKEN
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Estado actualizado correctamente');
+                    document.getElementById('bannerDetails').innerHTML = `Folio: ${currentFolio}<br>Estado: ${nuevoEstado}`;
+                } else {
+                    showToast('Error: ' + (data.error || 'Desconocido'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error al actualizar:', error);
+                showToast('Error al conectar con el servidor', 'error');
+            }
         };
 
         function showToast(msg, type = 'success') {
@@ -878,9 +1019,15 @@
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
-            loadFromFolio();
-            renderItems();
-            calculateTotal();
+            // Primero cargar folio (si existe)
+            loadFromFolio().then(() => {
+                // Si no hay folio, seleccionar servicio por defecto
+                if (!currentFolio) {
+                    selectService('minisplit');
+                }
+                renderItems();
+                calculateTotal();
+            });
 
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('#materialSearch') && !e.target.closest('#searchResults')) {
