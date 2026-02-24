@@ -100,6 +100,7 @@
             padding: 16px;
             transition: all 0.2s;
             cursor: pointer;
+            text-align: center;
         }
         .service-card.active {
             border-color: var(--accent-blue);
@@ -155,14 +156,6 @@
             background: var(--primary-medium);
         }
 
-        .item-row {
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 8px;
-        }
-
         .total-display {
             background: linear-gradient(135deg, white 0%, var(--gray-light) 100%);
             border-left: 4px solid var(--accent-blue);
@@ -207,11 +200,6 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--primary-medium);
         }
-
-        .service-locked {
-            border-left: 4px solid var(--accent-blue);
-            background: rgba(77, 159, 220, 0.05);
-        }
     </style>
 </head>
 <body class="min-h-screen p-4">
@@ -237,6 +225,7 @@
     </header>
 
     <main class="max-w-4xl mx-auto pt-28 pb-16 px-4 space-y-6">
+        <!-- Buscador de folio -->
         <div class="glass-panel p-6">
             <div class="section-title">
                 <i class="fas fa-search"></i> BUSCAR COTIZACIÓN
@@ -250,6 +239,7 @@
             <div id="folioSearchResult" class="text-sm text-gray-500 mt-2 text-center"></div>
         </div>
 
+        <!-- Banner de cotización cargada -->
         <div id="remoteQuoteBanner" class="hidden glass-panel p-6 border-l-4 border-l-[#4d9fdc]">
             <div class="flex items-start gap-4">
                 <i class="fas fa-cloud-download-alt text-2xl text-[#4d9fdc]"></i>
@@ -260,6 +250,40 @@
             </div>
         </div>
 
+        <!-- Familia de servicio - BOTONES AGREGADOS -->
+        <div class="glass-panel p-6">
+            <div class="section-title">
+                <i class="fas fa-tools"></i> FAMILIA DE SERVICIO
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <button onclick="selectService('minisplit')" id="svc-minisplit" class="service-card">
+                    <i class="fas fa-snowflake text-2xl mb-2 text-[#4d9fdc]"></i>
+                    <span class="text-sm font-semibold block">Minisplit</span>
+                </button>
+                <button onclick="selectService('plomeria')" id="svc-plomeria" class="service-card">
+                    <i class="fas fa-faucet-drip text-2xl mb-2 text-[#4d9fdc]"></i>
+                    <span class="text-sm font-semibold block">Plomería</span>
+                </button>
+                <button onclick="selectService('electricidad')" id="svc-electricidad" class="service-card">
+                    <i class="fas fa-bolt text-2xl mb-2 text-[#4d9fdc]"></i>
+                    <span class="text-sm font-semibold block">Electricidad</span>
+                </button>
+                <button onclick="selectService('soldadura')" id="svc-soldadura" class="service-card">
+                    <i class="fas fa-hammer text-2xl mb-2 text-[#4d9fdc]"></i>
+                    <span class="text-sm font-semibold block">Herrería</span>
+                </button>
+                <button onclick="selectService('camaras')" id="svc-camaras" class="service-card">
+                    <i class="fas fa-video text-2xl mb-2 text-[#4d9fdc]"></i>
+                    <span class="text-sm font-semibold block">Cámaras</span>
+                </button>
+                <button onclick="selectService('general')" id="svc-general" class="service-card">
+                    <i class="fas fa-toolbox text-2xl mb-2 text-[#4d9fdc]"></i>
+                    <span class="text-sm font-semibold block">General</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Datos del cliente -->
         <div class="glass-panel p-6">
             <div class="section-title">
                 <i class="fas fa-user-tie"></i> DATOS DEL CLIENTE
@@ -280,6 +304,7 @@
             </div>
         </div>
 
+        <!-- Diagnóstico técnico -->
         <div class="glass-panel p-6">
             <div class="section-title">
                 <i class="fas fa-stethoscope"></i> DIAGNÓSTICO TÉCNICO
@@ -304,6 +329,7 @@
             </div>
         </div>
 
+        <!-- Materiales y conceptos -->
         <div class="glass-panel p-6">
             <div class="flex justify-between items-center mb-4">
                 <div class="section-title">
@@ -354,6 +380,7 @@
             </div>
         </div>
 
+        <!-- Totales -->
         <div class="total-display">
             <div class="flex justify-between items-center text-sm">
                 <span class="text-gray-500">SUBTOTAL</span>
@@ -374,8 +401,9 @@
             </div>
         </div>
 
+        <!-- Botones de acción -->
         <div class="flex flex-col md:flex-row gap-3">
-            <button onclick="generatePDF()" id="generatePdfBtn" class="btn-primary flex-1 py-4 text-lg">
+            <button onclick="generatePDF()" class="btn-primary flex-1 py-4 text-lg">
                 <i class="fas fa-file-pdf mr-2"></i> GENERAR PDF PREMIUM
             </button>
             <button onclick="shareWhatsApp()" class="btn-secondary flex-1 py-4 text-lg">
@@ -387,6 +415,7 @@
         </div>
     </main>
 
+    <!-- Modal PDF -->
     <div id="pdfModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl overflow-hidden w-full max-w-4xl h-[90vh] flex flex-col">
             <div class="flex-1 overflow-auto" id="pdfContent">
@@ -409,6 +438,7 @@
         </div>
     </div>
 
+    <!-- Toast -->
     <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-2xl shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center space-x-3">
         <i class="fas fa-circle-check text-[#4d9fdc] text-lg"></i>
         <span id="toastMsg" class="text-sm font-semibold">Listo</span>
