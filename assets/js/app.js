@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJA9NRV4hiFOznVK7M4ftB0qFVD3G1_lxpn3N5htlVsQ5S6d50KCg60Xg3v1uovZSE/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrq9rCjrRYT2oB515fx_N-Z6eT4Mnvf1YZwf9i0SRFu6lOFfLvO99urccU7OpfRqOT/exec';
     
     const serviceConfig = {
       climatizacion: { 
