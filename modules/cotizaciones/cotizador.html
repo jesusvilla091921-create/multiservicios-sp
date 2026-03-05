@@ -1,0 +1,63 @@
+<section class="module-view">
+  <h2 class="module-title">Cotizaciones</h2>
+  <p class="module-muted" id="cotizadorHint">Selecciona una solicitud para comenzar.</p>
+
+  <div class="panel-card" id="cotizadorPanel" style="display:none;">
+    <div class="grid2">
+      <div>
+        <label>Cliente</label>
+        <input id="cotCliente" class="input-lite" type="text" readonly>
+      </div>
+      <div>
+        <label>Teléfono</label>
+        <input id="cotTelefono" class="input-lite" type="text" readonly>
+      </div>
+      <div>
+        <label>Servicio</label>
+        <input id="cotServicio" class="input-lite" type="text" readonly>
+      </div>
+      <div>
+        <label>Dirección</label>
+        <input id="cotDireccion" class="input-lite" type="text" readonly>
+      </div>
+    </div>
+
+    <div class="panel-card" style="margin-top:12px;">
+      <h3 style="margin-top:0;">Conceptos</h3>
+      <div id="conceptosWrap"></div>
+      <button type="button" class="btn-secondary" id="addConceptoBtn">Agregar concepto</button>
+      <div style="margin-top:12px;">
+        <label>Diagnóstico</label>
+        <textarea id="cotDiagnostico" class="input-lite" rows="3" placeholder="Describe hallazgos técnicos"></textarea>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+        <strong>Total:</strong>
+        <strong id="cotTotal">$0.00</strong>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+      <button type="button" id="guardarCotBtn" class="btn-primary">Guardar cotización</button>
+      <button type="button" id="pdfCotBtn" class="btn-secondary" disabled>Generar PDF</button>
+    </div>
+
+    <div class="panel-card" style="margin-top:12px;">
+      <h3 style="margin-top:0;">Programar servicio</h3>
+      <div class="grid2">
+        <div>
+          <label>Fecha</label>
+          <input id="srvFecha" class="input-lite" type="date">
+        </div>
+        <div>
+          <label>Hora</label>
+          <input id="srvHora" class="input-lite" type="time">
+        </div>
+        <div>
+          <label>Técnico</label>
+          <input id="srvTecnico" class="input-lite" type="text" placeholder="Nombre del técnico">
+        </div>
+      </div>
+      <button type="button" id="programarSrvBtn" class="btn-primary" disabled style="margin-top:10px;">Programar servicio</button>
+    </div>
+  </div>
+</section>

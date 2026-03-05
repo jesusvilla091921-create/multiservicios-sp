@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Multiservicios SP · ingeniería de mantenimiento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/global.css">
+  <link rel="stylesheet" href="assets/css/index.css">
+</head>
+<body>
+  <header class="header">
+    <img src="assets/img/logo-multiservicios-sp.png" alt="Multiservicios SP" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+    <span style="display:none; font-size:2rem; color:var(--accent-light);">⚙️SP</span>
+  </header>
+
+  <section class="hero">
+    <h1>MULTISERVICIOS SP<br><span>ingeniería de mantenimiento</span></h1>
+    <div class="hero-pill-wrap">
+      <p>⚡ respuesta 30 min · monterrey</p>
+      <div class="hero-guide">Selecciona el servicio que necesitas</div>
+    </div>
+    <div class="services-grid">
+      <button class="service-btn" onclick="openModal('climatizacion')"><span class="service-icon">❄️</span><div>Climatización Avanzada <small>VRV / Minisplit / Chillers</small></div></button>
+      <button class="service-btn" onclick="openModal('plomeria')"><span class="service-icon">🚰</span><div>Plomería <small>destape hidráulico</small></div></button>
+      <button class="service-btn" onclick="openModal('electricidad')"><span class="service-icon">⚡</span><div>Electricidad <small>tableros / tierras</small></div></button>
+      <button class="service-btn" onclick="openModal('soldadura')"><span class="service-icon">🧱</span><div>Soldadura <small>estructura / portones</small></div></button>
+      <button class="service-btn" onclick="openModal('camaras')"><span class="service-icon">🎥</span><div>Cámaras <small>cctv / control acceso</small></div></button>
+      <button class="service-btn" onclick="openModal('general')"><span class="service-icon">🏠</span><div>Mantenimiento general <small>pintura industrial / tablaroca</small></div></button>
+    </div>
+  </section>
+
+  <!-- PROTOCOLO ESEM (Sección movida para mayor autoridad) -->
+  <section class="trust-section">
+    <h2 class="trust-title">protocolo esem</h2>
+    <div class="protocol-grid">
+      <div class="protocol-step" onclick="openModal('general')">
+        <span class="step-icon">📡</span>
+        <h3>1. Diagnóstico Predictivo por Capas</h3>
+        <p>Análisis con termografía, ultrasonido y vibraciones. Detectamos fallas antes de que sean problemas.</p>
+      </div>
+      <div class="protocol-step" onclick="openModal('general')">
+        <span class="step-icon">📋</span>
+        <h3>2. Ficha Técnica</h3>
+        <p>Documento con alcance, especificaciones y cronograma certificado.</p>
+      </div>
+      <div class="protocol-step" onclick="openModal('general')">
+        <span class="step-icon">🔧</span>
+        <h3>3. Intervención Técnica Certificada</h3>
+        <p>Personal con certificación ESEM. Garantía de 12 meses en todos los trabajos.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="services-detail">
+    <h2 class="section-title">especialidades de acero</h2>
+    <div class="section-subtitle">soldamos · instalamos · reparamos · certificamos</div>
+    
+    <div class="services-list">
+      <div class="service-card" id="card-soldadura" onclick="toggleCard('card-soldadura')">
+        <div class="card-header">
+          <span class="service-item-icon">🔥</span>
+          <div>
+            <h3>Soldadura estructural</h3>
+            <p>portones, escaleras, rejas, perfiles</p>
+          </div>
+        </div>
+        <div class="technical-layer" onclick="event.stopPropagation()">
+          <div>
+            <span class="subservice-chip">TIG / MIG</span>
+            <span class="subservice-chip">Acero inoxidable</span>
+            <span class="subservice-chip">Herrería residencial</span>
+            <button class="card-cta" onclick="openModal('soldadura'); event.stopPropagation();">
+              <i class="fa-regular fa-clipboard"></i> COTIZAR SOLDADURA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="service-card" id="card-minisplit" onclick="toggleCard('card-minisplit')">
+        <div class="card-header">
+          <span class="service-item-icon">❄️</span>
+          <div>
+            <h3>Minisplit / VRV</h3>
+            <p>instalación, carga de gas, limpieza, electrónica</p>
+          </div>
+        </div>
+        <div class="technical-layer" onclick="event.stopPropagation()">
+          <div>
+            <span class="subservice-chip">Instalación</span>
+            <span class="subservice-chip">R410A / R32</span>
+            <span class="subservice-chip">Lavado químico</span>
+            <span class="subservice-chip">Reparación de tarjetas</span>
+            <button class="card-cta" onclick="openModal('climatizacion'); event.stopPropagation();">
+              <i class="fa-regular fa-snowflake"></i> DIAGNOSTICAR CLIMA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="service-card" id="card-plomeria" onclick="toggleCard('card-plomeria')">
+        <div class="card-header">
+          <span class="service-item-icon">🚰</span>
+          <div>
+            <h3>Plomería pesada</h3>
+            <p>hidroneumáticos, destape mecánico, fugas</p>
+          </div>
+        </div>
+        <div class="technical-layer" onclick="event.stopPropagation()">
+          <div>
+            <span class="subservice-chip">Destape con máquina</span>
+            <span class="subservice-chip">Fugas ocultas</span>
+            <span class="subservice-chip">Bombas hidroneumáticas</span>
+            <button class="card-cta" onclick="openModal('plomeria'); event.stopPropagation();">
+              <i class="fa-regular fa-faucet-drip"></i> REVISAR PLOMERÍA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="service-card" id="card-electrica" onclick="toggleCard('card-electrica')">
+        <div class="card-header">
+          <span class="service-item-icon">⚡</span>
+          <div>
+            <h3>Electricidad trifásica</h3>
+            <p>tableros, tierras físicas, cortos</p>
+          </div>
+        </div>
+        <div class="technical-layer" onclick="event.stopPropagation()">
+          <div>
+            <span class="subservice-chip">Tableros generales</span>
+            <span class="subservice-chip">Tierras físicas</span>
+            <span class="subservice-chip">Análisis termográfico</span>
+            <button class="card-cta" onclick="openModal('electricidad'); event.stopPropagation();">
+              <i class="fa-regular fa-bolt"></i> DIAGNOSTICAR ELECTRICIDAD
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="service-card" id="card-pintura" onclick="toggleCard('card-pintura')">
+        <div class="card-header">
+          <span class="service-item-icon">🎨</span>
+          <div>
+            <h3>Pintura industrial</h3>
+            <p>pulverizadora, acabado epóxico</p>
+          </div>
+        </div>
+        <div class="technical-layer" onclick="event.stopPropagation()">
+          <div>
+            <span class="subservice-chip">Airless</span>
+            <span class="subservice-chip">Epóxico / Esmalte</span>
+            <span class="subservice-chip">Texturizados</span>
+            <button class="card-cta" onclick="openModal('general'); event.stopPropagation();">
+              <i class="fa-regular fa-paint-roller"></i> COTIZAR PINTURA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="service-card" id="card-cctv" onclick="toggleCard('card-cctv')">
+        <div class="card-header">
+          <span class="service-item-icon">📹</span>
+          <div>
+            <h3>CCTV / control acceso</h3>
+            <p>instalación, configuración remota</p>
+          </div>
+        </div>
+        <div class="technical-layer" onclick="event.stopPropagation()">
+          <div>
+            <span class="subservice-chip">Cámaras IP</span>
+            <span class="subservice-chip">NVR / DVR</span>
+            <span class="subservice-chip">Control de acceso</span>
+            <button class="card-cta" onclick="openModal('camaras'); event.stopPropagation();">
+              <i class="fa-regular fa-video"></i> INSTALAR CCTV
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="diagnosticModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="close-modal" onclick="closeModal()">&times;</span>
+      <h2 class="modal-title"><span id="modalIcon">🔧</span><span id="modalServiceName">servicio</span></h2>
+      
+      <div id="questionsContainer"></div>
+      
+      <div class="modal-nav" id="modalNav">
+        <button class="nav-btn" id="prevBtn" onclick="previousStep()">
+          <i class="fas fa-arrow-left"></i> Anterior
+        </button>
+        <button class="nav-btn" id="nextBtn" onclick="nextStep()">
+          Siguiente <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+      
+      <button class="whatsapp-btn" id="whatsappBtn" onclick="sendToWhatsApp()" disabled style="display: none;">
+        <span>📱</span><span>Conectar ahora con un técnico especializado</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Sticky CTA estratégico -->
+  <div class="sticky-cta" onclick="openModal('general')">
+    <span>💬</span>
+    <span>Solicitar ingeniería de mantenimiento</span>
+    <span>→</span>
+  </div>
+
+  <script src="assets/js/router.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

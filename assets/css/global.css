@@ -1,0 +1,19 @@
+:root {
+  --brand-primary: #3f43a4;
+  --brand-accent: #18a96a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
