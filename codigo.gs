@@ -1340,7 +1340,7 @@ function handleGetDashboard(ss) {
     const solicitudesValues = solicitudesSheet.getDataRange().getValues();
     for (let i = 1; i < solicitudesValues.length; i++) {
       const estadoSolicitud = String(solicitudesValues[i][6] || '').toUpperCase().trim();
-      if (!estadoSolicitud || estadoSolicitud === 'NUEVA' || estadoSolicitud === 'COTIZANDO') {
+      if (!estadoSolicitud || estadoSolicitud === 'NUEVA') {
         solicitudes += 1;
       }
     }
@@ -1349,11 +1349,8 @@ function handleGetDashboard(ss) {
   if (cotizacionesSheet) {
     const cotValues = cotizacionesSheet.getDataRange().getValues();
     for (let i = 1; i < cotValues.length; i++) {
-      const row = cotValues[i];
-      const timestamp = row[1];
-      const estado = String(row[17] || '').toUpperCase().trim();
-
-      if (estado === 'PENDIENTE' || estado === 'COTIZANDO' || estado === 'NUEVA') {
+      const estado = String(cotValues[i][17] || '').toUpperCase().trim();
+      if (estado === 'PENDIENTE') {
         cotizaciones += 1;
       }
     }
