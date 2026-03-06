@@ -11,6 +11,7 @@ const CONFIG = {
     SERVICIOS: 'Servicios',
     MATERIALES: 'MaterialesBase',
     TECNICOS: 'Tecnicos',
+    BLOQUEOS_TECNICOS: 'BloqueosTecnicos',
     LOG: 'LogEventos'
   },
   API_TOKEN: 'MULTI2024SP_SECRET_TOKEN_CAMBIAR_EN_PRODUCCION'
@@ -91,6 +92,10 @@ function createAllSheetsIfNotExist(ss) {
 
   ensureSheetExists(ss, CONFIG.SHEET_NAMES.TECNICOS, [
     'ID_Tecnico', 'Nombre', 'Telefono', 'Email', 'Especialidades', 'Activo', 'Fecha_Registro'
+  ]);
+
+  ensureSheetExists(ss, CONFIG.SHEET_NAMES.BLOQUEOS_TECNICOS, [
+    'Timestamp', 'Fecha', 'Hora', 'Tecnico', 'Motivo', 'Activo'
   ]);
 
   ensureSheetExists(ss, CONFIG.SHEET_NAMES.LOG, [
@@ -228,6 +233,18 @@ function doPost(e) {
       return handleArchiveCotizacion(data, ss);
     }
 
+    if (action === 'actualizarConfigDisponibilidad') {
+      return handleActualizarConfigDisponibilidad(data, ss);
+    }
+
+    if (action === 'bloquearHorarioTecnico') {
+      return handleBloquearHorarioTecnico(data, ss);
+    }
+
+    if (action === 'desbloquearHorarioTecnico') {
+      return handleDesbloquearHorarioTecnico(data, ss);
+    }
+
     if (action === 'nuevaCotizacion') {
       return handleNewCotizacion(data, ss);
     }
@@ -276,7 +293,14 @@ function handleNuevaSolicitud(data, ss) {
 
   const idSolicitud = String(data.idSolicitud || '').trim() || generateSolicitudId(new Date());
   const estado = String(data.estado || 'Nueva').trim();
-  const notas = String(data.notas || data.comentarios || '').trim();
+  const fechaPreferida = normalizeDateValue(String(data.fechaPreferida || '').trim(), Session.getScriptTimeZone());
+  const horaPreferida = normalizeTimeValue(String(data.horaPreferida || '').trim());
+  const tecnicoPreferido = String(data.tecnicoPreferido || '').trim();
+  const notasBase = String(data.notas || data.comentarios || '').trim();
+  const slotNote = (fechaPreferida && horaPreferida)
+    ? (' | SLOT:' + fechaPreferida + ' ' + horaPreferida + ' TEC:' + (tecnicoPreferido || 'POR_ASIGNAR'))
+    : '';
+  const notas = (notasBase + slotNote).trim();
 
   sheet.appendRow([
     idSolicitud,
@@ -349,6 +373,126 @@ function generateServicioId(now) {
   const day = String(ts.getDate()).padStart(2, '0');
   const random = Math.floor(Math.random() * 9000 + 1000);
   return 'SER-' + year + month + day + '-' + random;
+}
+
+function parseTimeStringToMinutes(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return null;
+
+  const ampmMatch = raw.match(/^(\d{1,2}):(\d{2})\s*([ap]\.?\s*m\.?)$/i);
+  if (ampmMatch) {
+    let hours = Number(ampmMatch[1] || 0);
+    const minutes = Number(ampmMatch[2] || 0);
+    const suffix = String(ampmMatch[3] || '').replace(/\./g, '');
+    if (suffix === 'pm' && hours < 12) hours += 12;
+    if (suffix === 'am' && hours === 12) hours = 0;
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+    return (hours * 60) + minutes;
+  }
+
+  const stdMatch = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!stdMatch) return null;
+  const h = Number(stdMatch[1] || 0);
+  const m = Number(stdMatch[2] || 0);
+  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return (h * 60) + m;
+}
+
+function minutesToHHMM(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
+function normalizeTimeValue(value) {
+  if (value instanceof Date) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'HH:mm');
+  }
+  const mins = parseTimeStringToMinutes(value);
+  if (mins === null) return '';
+  return minutesToHHMM(mins);
+}
+
+function getDisponibilidadSettings(ss) {
+  const props = PropertiesService.getScriptProperties();
+  const startHour = String(props.getProperty('WORKDAY_START') || '08:00').trim();
+  const endHour = String(props.getProperty('WORKDAY_END') || '18:00').trim();
+  const interval = Number(props.getProperty('SLOT_MINUTES') || 60);
+  const techFromProp = String(props.getProperty('WORK_TECHNICIANS') || '').trim();
+
+  let tecnicos = [];
+  if (techFromProp) {
+    try {
+      const parsed = JSON.parse(techFromProp);
+      if (Array.isArray(parsed)) {
+        tecnicos = parsed.map(function (t) { return String(t || '').trim(); }).filter(Boolean);
+      }
+    } catch (_) {}
+  }
+
+  if (tecnicos.length === 0) {
+    const techSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.TECNICOS);
+    if (techSheet) {
+      const values = techSheet.getDataRange().getValues();
+      for (let i = 1; i < values.length; i++) {
+        const name = String(values[i][1] || '').trim();
+        const activoRaw = String(values[i][5] || '').trim().toUpperCase();
+        const isActivo = !activoRaw || activoRaw === 'TRUE' || activoRaw === 'SI' || activoRaw === 'ACTIVO' || activoRaw === '1';
+        if (name && isActivo) tecnicos.push(name);
+      }
+    }
+  }
+
+  if (tecnicos.length === 0) tecnicos = ['Técnico 1'];
+
+  return {
+    startHour: normalizeTimeValue(startHour) || '08:00',
+    endHour: normalizeTimeValue(endHour) || '18:00',
+    slotMinutes: (interval >= 15 && interval <= 180) ? interval : 60,
+    tecnicos: tecnicos
+  };
+}
+
+function getServiciosOcupadosIndex(serviciosSheet) {
+  const index = {};
+  if (!serviciosSheet) return index;
+
+  const values = serviciosSheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    const estado = String(values[i][10] || '').toUpperCase().trim();
+    if (estado === 'CANCELADO') continue;
+    const fecha = normalizeDateValue(values[i][7], Session.getScriptTimeZone());
+    const hora = normalizeTimeValue(values[i][8]);
+    const tecnico = String(values[i][9] || '').trim().toUpperCase();
+    if (!fecha || !hora || !tecnico) continue;
+    index[fecha + '|' + hora + '|' + tecnico] = true;
+  }
+  return index;
+}
+
+function getBloqueosIndex(ss) {
+  const index = {};
+  const bloqueosSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.BLOQUEOS_TECNICOS);
+  if (!bloqueosSheet) return index;
+  const values = bloqueosSheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    const activo = String(values[i][5] || '').toUpperCase().trim();
+    if (activo === 'NO' || activo === 'FALSE' || activo === '0') continue;
+    const fecha = normalizeDateValue(values[i][1], Session.getScriptTimeZone());
+    const hora = normalizeTimeValue(values[i][2]);
+    const tecnico = String(values[i][3] || '').trim().toUpperCase();
+    if (!fecha || !hora || !tecnico) continue;
+    index[fecha + '|' + hora + '|' + tecnico] = true;
+  }
+  return index;
+}
+
+function isSlotDisponible(ss, fecha, hora, tecnico) {
+  const serviciosSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.SERVICIOS);
+  const ocupados = getServiciosOcupadosIndex(serviciosSheet);
+  const bloqueos = getBloqueosIndex(ss);
+  const key = normalizeDateValue(fecha, Session.getScriptTimeZone()) + '|' + normalizeTimeValue(hora) + '|' + String(tecnico || '').trim().toUpperCase();
+  return !ocupados[key] && !bloqueos[key];
 }
 
 function handleCotizarSolicitud(data, ss) {
@@ -431,14 +575,18 @@ function handleProgramarServicio(data, ss) {
 
   const idCotizacion = String(data.idCotizacion || '').trim();
   const idSolicitud = String(data.idSolicitud || '').trim();
-  const fecha = String(data.fecha || '').trim();
-  const hora = String(data.hora || '').trim();
+  const fecha = normalizeDateValue(String(data.fecha || '').trim(), Session.getScriptTimeZone());
+  const hora = normalizeTimeValue(String(data.hora || '').trim());
   const tecnico = String(data.tecnico || '').trim();
   const estado = String(data.estado || 'Programado').trim();
   const total = Number(data.total || 0);
 
   if (!idCotizacion || !fecha || !tecnico) {
     throw new Error('idCotizacion, fecha y tecnico son obligatorios');
+  }
+
+  if (hora && !isSlotDisponible(ss, fecha, hora, tecnico)) {
+    throw new Error('El horario seleccionado ya no está disponible para ese técnico');
   }
 
   let cliente = '';
@@ -894,6 +1042,152 @@ function handleGetCotizacionesArchivadas(ss) {
   return createCorsResponse({ success: true, cotizaciones: cotizaciones });
 }
 
+function handleGetConfigDisponibilidad(ss) {
+  const settings = getDisponibilidadSettings(ss);
+  return createCorsResponse({
+    success: true,
+    startHour: settings.startHour,
+    endHour: settings.endHour,
+    slotMinutes: settings.slotMinutes,
+    tecnicos: settings.tecnicos
+  });
+}
+
+function handleGetDisponibilidad(params, ss) {
+  const settings = getDisponibilidadSettings(ss);
+  const serviciosSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.SERVICIOS);
+  const ocupados = getServiciosOcupadosIndex(serviciosSheet);
+  const bloqueos = getBloqueosIndex(ss);
+
+  const start = String(params.startDate || '').trim();
+  const days = Math.min(30, Math.max(1, Number(params.days || 14)));
+  const tz = Session.getScriptTimeZone();
+  let baseDate = start ? new Date(start + 'T00:00:00') : new Date();
+  if (isNaN(baseDate.getTime())) baseDate = new Date();
+
+  const startMins = parseTimeStringToMinutes(settings.startHour);
+  const endMins = parseTimeStringToMinutes(settings.endHour);
+  if (startMins === null || endMins === null || endMins <= startMins) {
+    throw new Error('Configuración de horario inválida');
+  }
+
+  const slotsByDate = [];
+  const now = new Date();
+  for (let d = 0; d < days; d++) {
+    const current = new Date(baseDate.getTime());
+    current.setDate(baseDate.getDate() + d);
+    const keyDate = Utilities.formatDate(current, tz, 'yyyy-MM-dd');
+    const daySlots = [];
+
+    for (let mins = startMins; mins < endMins; mins += settings.slotMinutes) {
+      const hhmm = minutesToHHMM(mins);
+      const slotDateTime = new Date(keyDate + 'T' + hhmm + ':00');
+      if (!isNaN(slotDateTime.getTime()) && slotDateTime.getTime() < (now.getTime() + 30 * 60 * 1000)) {
+        continue;
+      }
+      for (let t = 0; t < settings.tecnicos.length; t++) {
+        const tecnico = settings.tecnicos[t];
+        const lookup = keyDate + '|' + hhmm + '|' + String(tecnico || '').trim().toUpperCase();
+        if (ocupados[lookup] || bloqueos[lookup]) continue;
+        daySlots.push({
+          fecha: keyDate,
+          hora: hhmm,
+          tecnico: tecnico
+        });
+      }
+    }
+
+    slotsByDate.push({
+      fecha: keyDate,
+      slots: daySlots
+    });
+  }
+
+  return createCorsResponse({
+    success: true,
+    startHour: settings.startHour,
+    endHour: settings.endHour,
+    slotMinutes: settings.slotMinutes,
+    tecnicos: settings.tecnicos,
+    dias: slotsByDate
+  });
+}
+
+function handleActualizarConfigDisponibilidad(data, ss) {
+  const props = PropertiesService.getScriptProperties();
+  const inicio = normalizeTimeValue(String(data.startHour || '').trim() || '08:00');
+  const fin = normalizeTimeValue(String(data.endHour || '').trim() || '18:00');
+  const slotMinutes = Number(data.slotMinutes || 60);
+
+  if (!inicio || !fin) throw new Error('Hora inicio y fin son obligatorias');
+  const inicioMins = parseTimeStringToMinutes(inicio);
+  const finMins = parseTimeStringToMinutes(fin);
+  if (inicioMins === null || finMins === null || finMins <= inicioMins) {
+    throw new Error('Rango de horario inválido');
+  }
+  if (slotMinutes < 15 || slotMinutes > 180) {
+    throw new Error('slotMinutes debe estar entre 15 y 180');
+  }
+
+  const tecnicos = Array.isArray(data.tecnicos)
+    ? data.tecnicos.map(function (t) { return String(t || '').trim(); }).filter(Boolean)
+    : String(data.tecnicos || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+  if (!tecnicos.length) throw new Error('Debes indicar al menos un técnico');
+
+  props.setProperty('WORKDAY_START', inicio);
+  props.setProperty('WORKDAY_END', fin);
+  props.setProperty('SLOT_MINUTES', String(slotMinutes));
+  props.setProperty('WORK_TECHNICIANS', JSON.stringify(tecnicos));
+
+  logEvent(ss, 'CONFIG', 'DISPONIBILIDAD', 'Horario actualizado');
+  return createCorsResponse({
+    success: true,
+    startHour: inicio,
+    endHour: fin,
+    slotMinutes: slotMinutes,
+    tecnicos: tecnicos
+  });
+}
+
+function handleBloquearHorarioTecnico(data, ss) {
+  const sheet = ss.getSheetByName(CONFIG.SHEET_NAMES.BLOQUEOS_TECNICOS);
+  if (!sheet) throw new Error('No existe hoja de bloqueos');
+
+  const fecha = normalizeDateValue(String(data.fecha || '').trim(), Session.getScriptTimeZone());
+  const hora = normalizeTimeValue(String(data.hora || '').trim());
+  const tecnico = String(data.tecnico || '').trim();
+  const motivo = String(data.motivo || '').trim();
+  if (!fecha || !hora || !tecnico) throw new Error('fecha, hora y tecnico son obligatorios');
+
+  sheet.appendRow([new Date(), fecha, hora, tecnico, motivo, 'SI']);
+  logEvent(ss, 'BLOQUEO', tecnico, 'Bloqueo de horario ' + fecha + ' ' + hora);
+  return createCorsResponse({ success: true, message: 'Horario bloqueado' });
+}
+
+function handleDesbloquearHorarioTecnico(data, ss) {
+  const sheet = ss.getSheetByName(CONFIG.SHEET_NAMES.BLOQUEOS_TECNICOS);
+  if (!sheet) throw new Error('No existe hoja de bloqueos');
+
+  const fecha = normalizeDateValue(String(data.fecha || '').trim(), Session.getScriptTimeZone());
+  const hora = normalizeTimeValue(String(data.hora || '').trim());
+  const tecnico = String(data.tecnico || '').trim().toUpperCase();
+  if (!fecha || !hora || !tecnico) throw new Error('fecha, hora y tecnico son obligatorios');
+
+  const values = sheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    const rowFecha = normalizeDateValue(values[i][1], Session.getScriptTimeZone());
+    const rowHora = normalizeTimeValue(values[i][2]);
+    const rowTecnico = String(values[i][3] || '').trim().toUpperCase();
+    const rowActivo = String(values[i][5] || '').trim().toUpperCase();
+    if (rowFecha === fecha && rowHora === hora && rowTecnico === tecnico && rowActivo !== 'NO' && rowActivo !== 'FALSE') {
+      sheet.getRange(i + 1, 6).setValue('NO');
+      logEvent(ss, 'BLOQUEO', tecnico, 'Desbloqueo de horario ' + fecha + ' ' + hora);
+      return createCorsResponse({ success: true, message: 'Horario desbloqueado' });
+    }
+  }
+  throw new Error('No se encontró bloqueo activo para ese horario');
+}
+
 function doGet(e) {
   try {
     const ss = getSpreadsheet();
@@ -925,6 +1219,14 @@ function doGet(e) {
 
     if (p.action === 'cotizacionesArchivadas') {
       return handleGetCotizacionesArchivadas(ss);
+    }
+
+    if (p.action === 'configDisponibilidad') {
+      return handleGetConfigDisponibilidad(ss);
+    }
+
+    if (p.action === 'disponibilidad') {
+      return handleGetDisponibilidad(p, ss);
     }
 
     if (typeof p.materiales !== 'undefined') {

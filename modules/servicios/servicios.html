@@ -7,6 +7,36 @@
   </div>
   <p class="module-muted">Trabajos programados y en ejecución.</p>
 
+  <div class="panel-card" style="margin-bottom:16px;">
+    <h3 style="margin:0 0 12px;">Disponibilidad para clientes</h3>
+    <div class="grid2" style="margin-bottom:8px;">
+      <div>
+        <label>Inicio jornada</label>
+        <input id="cfgStartHour" class="input-lite" type="time">
+      </div>
+      <div>
+        <label>Fin jornada</label>
+        <input id="cfgEndHour" class="input-lite" type="time">
+      </div>
+      <div>
+        <label>Intervalo (minutos)</label>
+        <input id="cfgSlotMinutes" class="input-lite" type="number" min="15" max="180" step="15" value="60">
+      </div>
+      <div>
+        <label>Técnicos (separados por coma)</label>
+        <input id="cfgTecnicos" class="input-lite" type="text" placeholder="Jose, Marco, Ana">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" id="saveDisponibilidadCfg" class="btn-primary">
+        <i class="fas fa-save"></i> Guardar disponibilidad
+      </button>
+      <button type="button" id="blockHorarioBtn" class="btn-secondary">
+        <i class="fas fa-calendar-times"></i> Bloquear horario técnico
+      </button>
+    </div>
+  </div>
+
   <div class="table-wrap">
     <table class="solicitudes-table" id="tablaServicios">
       <thead>

@@ -660,3 +660,85 @@
       background: var(--accent-soft);
       border-radius: 8px;
     }
+
+    .availability-dates {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .availability-date-btn {
+      border: 1px solid var(--border-light);
+      background: #fff;
+      color: var(--text-primary);
+      border-radius: 12px;
+      padding: 10px 8px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .availability-date-btn small {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .availability-date-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent-soft);
+    }
+
+    .availability-date-btn.is-active {
+      border-color: var(--accent-soft);
+      background: #e9fffb;
+    }
+
+    .availability-slots {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+    }
+
+    .availability-slot-btn {
+      border: 1px solid var(--border-light);
+      background: #fff;
+      color: var(--text-primary);
+      border-radius: 12px;
+      padding: 10px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .availability-slot-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent-soft);
+    }
+
+    .availability-slot-btn.is-selected {
+      border-color: var(--accent-soft);
+      background: #e9fffb;
+      box-shadow: 0 8px 20px -12px rgba(15, 118, 110, 0.5);
+    }
+
+    .availability-slot-btn small {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+    }
+
+    .availability-empty {
+      border: 1px dashed var(--border-light);
+      border-radius: 12px;
+      padding: 12px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      background: #fff;
+    }

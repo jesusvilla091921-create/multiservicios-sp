@@ -557,6 +557,48 @@ body.auth-locked {
   font-size: 0.8rem !important;
 }
 
+.btn-primary.is-busy,
+.btn-secondary.is-busy,
+.solicitudes-action.is-busy {
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.ui-loading-curtain {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 24, 48, 0.65);
+  backdrop-filter: blur(2px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+}
+
+.ui-loading-curtain.is-visible {
+  display: flex;
+  animation: curtainIn 0.2s ease;
+}
+
+.ui-loading-card {
+  background: #fff;
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  box-shadow: var(--shadow-drop);
+  padding: 18px 20px;
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+@keyframes curtainIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* --- Responsive --- */
 @media (max-width: 1100px) {
   .dashboard-module .cards {

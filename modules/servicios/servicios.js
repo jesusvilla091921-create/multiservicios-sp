@@ -2,22 +2,30 @@
   let serviciosCache = [];
 
   function e(v) {
-    return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  function withBusyAction(btn, text) {
+    if (!btn) return function () {};
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add('is-busy');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (text || 'Procesando...');
+    return function done() {
+      btn.disabled = false;
+      btn.classList.remove('is-busy');
+      btn.innerHTML = original;
+    };
   }
 
   async function actualizarEstado(idServicio, estado, cambiosPosponer) {
     let payload = { idServicio: idServicio, estado: estado };
     if (estado === 'POSPUESTO') {
-      if (cambiosPosponer && cambiosPosponer.nuevaFecha) {
-        payload.nuevaFecha = cambiosPosponer.nuevaFecha;
-        payload.nuevaHora = cambiosPosponer.nuevaHora || '';
-      } else {
-        const nuevaFecha = prompt('Nueva fecha (YYYY-MM-DD):', '');
-        if (!nuevaFecha) return;
-        const nuevaHora = prompt('Nueva hora (HH:MM, opcional):', '') || '';
-        payload.nuevaFecha = nuevaFecha.trim();
-        payload.nuevaHora = nuevaHora.trim();
+      if (!cambiosPosponer || !cambiosPosponer.nuevaFecha) {
+        throw new Error('Falta nueva fecha para posponer');
       }
+      payload.nuevaFecha = cambiosPosponer.nuevaFecha;
+      payload.nuevaHora = cambiosPosponer.nuevaHora || '';
     }
 
     const resp = await window.api('/updateServicioEstado', payload);
@@ -92,6 +100,7 @@
         row.puedeCerrar = false;
         render(serviciosCache);
 
+        const done = withBusyAction(btn, 'Guardando...');
         try {
           await actualizarEstado(idServicio, estado, cambiosPosponer);
           await cargar(true);
@@ -99,6 +108,8 @@
           serviciosCache = prev;
           render(serviciosCache);
           alert('Error: ' + (err.message || err));
+        } finally {
+          done();
         }
       });
     });
@@ -113,19 +124,115 @@
     render(serviciosCache);
   }
 
+  async function cargarConfigDisponibilidad() {
+    const payload = await window.api('/configDisponibilidad', null, { force: true });
+    if (!payload || !payload.success) {
+      throw new Error(payload && payload.error ? payload.error : 'No se pudo cargar configuración');
+    }
+    const tecnicos = Array.isArray(payload.tecnicos) ? payload.tecnicos : [];
+    const start = document.getElementById('cfgStartHour');
+    const end = document.getElementById('cfgEndHour');
+    const slot = document.getElementById('cfgSlotMinutes');
+    const names = document.getElementById('cfgTecnicos');
+    if (start) start.value = payload.startHour || '08:00';
+    if (end) end.value = payload.endHour || '18:00';
+    if (slot) slot.value = Number(payload.slotMinutes || 60);
+    if (names) names.value = tecnicos.join(', ');
+  }
+
+  async function guardarConfigDisponibilidad(btn) {
+    const startHour = document.getElementById('cfgStartHour')?.value;
+    const endHour = document.getElementById('cfgEndHour')?.value;
+    const slotMinutes = Number(document.getElementById('cfgSlotMinutes')?.value || 60);
+    const tecnicosRaw = document.getElementById('cfgTecnicos')?.value || '';
+    const tecnicos = tecnicosRaw.split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+
+    if (!startHour || !endHour || !tecnicos.length) {
+      alert('Completa inicio, fin y técnicos.');
+      return;
+    }
+
+    const done = withBusyAction(btn, 'Guardando...');
+    try {
+      const resp = await window.api('/actualizarConfigDisponibilidad', {
+        startHour: startHour,
+        endHour: endHour,
+        slotMinutes: slotMinutes,
+        tecnicos: tecnicos
+      });
+      if (!resp || !resp.success) {
+        throw new Error(resp && resp.error ? resp.error : 'No se pudo guardar la configuración');
+      }
+      alert('Disponibilidad actualizada. El index del cliente ya usará estos horarios.');
+    } finally {
+      done();
+    }
+  }
+
+  async function bloquearHorario(btn) {
+    const fecha = prompt('Fecha a bloquear (YYYY-MM-DD):', '');
+    if (!fecha) return;
+    const hora = prompt('Hora a bloquear (HH:MM):', '');
+    if (!hora) return;
+    const tecnico = prompt('Técnico:', (document.getElementById('cfgTecnicos')?.value || '').split(',')[0] || '');
+    if (!tecnico) return;
+    const motivo = prompt('Motivo (opcional):', '') || '';
+
+    const done = withBusyAction(btn, 'Bloqueando...');
+    try {
+      const resp = await window.api('/bloquearHorarioTecnico', {
+        fecha: fecha.trim(),
+        hora: hora.trim(),
+        tecnico: tecnico.trim(),
+        motivo: motivo.trim()
+      });
+      if (!resp || !resp.success) {
+        throw new Error(resp && resp.error ? resp.error : 'No se pudo bloquear el horario');
+      }
+      alert('Horario bloqueado correctamente.');
+    } finally {
+      done();
+    }
+  }
+
   const refreshBtn = document.getElementById('refreshServicios');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', function () {
+      const done = withBusyAction(refreshBtn, 'Actualizando...');
       cargar(true).catch(function (err) {
+        alert('Error: ' + (err.message || err));
+      }).finally(done);
+    });
+  }
+
+  const saveCfgBtn = document.getElementById('saveDisponibilidadCfg');
+  if (saveCfgBtn) {
+    saveCfgBtn.addEventListener('click', function () {
+      guardarConfigDisponibilidad(saveCfgBtn).catch(function (err) {
         alert('Error: ' + (err.message || err));
       });
     });
   }
 
-  cargar(false).catch(function (err) {
-    const tbody = document.querySelector('#tablaServicios tbody');
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="7">Error: ' + e(err.message || err) + '</td></tr>';
+  const blockBtn = document.getElementById('blockHorarioBtn');
+  if (blockBtn) {
+    blockBtn.addEventListener('click', function () {
+      bloquearHorario(blockBtn).catch(function (err) {
+        alert('Error: ' + (err.message || err));
+      });
+    });
+  }
+
+  Promise.allSettled([
+    cargar(false),
+    cargarConfigDisponibilidad()
+  ]).then(function (results) {
+    const failed = results.find(function (r) { return r.status === 'rejected'; });
+    if (failed) {
+      const tbody = document.querySelector('#tablaServicios tbody');
+      if (tbody && !tbody.children.length) {
+        tbody.innerHTML = '<tr><td colspan="7">Error: ' + e(failed.reason && failed.reason.message ? failed.reason.message : failed.reason) + '</td></tr>';
+      }
     }
   });
 })();

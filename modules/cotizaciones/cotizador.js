@@ -1,6 +1,42 @@
 (function () {
   let idCotizacion = null;
 
+  function ensureLoadingCurtain() {
+    let node = document.getElementById('uiLoadingCurtain');
+    if (node) return node;
+    node = document.createElement('div');
+    node.id = 'uiLoadingCurtain';
+    node.className = 'ui-loading-curtain';
+    node.innerHTML = '<div class="ui-loading-card"><i class="fas fa-spinner fa-spin"></i><span id="uiLoadingCurtainText">Procesando...</span></div>';
+    document.body.appendChild(node);
+    return node;
+  }
+
+  function showCurtain(text) {
+    const node = ensureLoadingCurtain();
+    const textNode = node.querySelector('#uiLoadingCurtainText');
+    if (textNode) textNode.textContent = text || 'Procesando...';
+    node.classList.add('is-visible');
+  }
+
+  function hideCurtain() {
+    const node = document.getElementById('uiLoadingCurtain');
+    if (node) node.classList.remove('is-visible');
+  }
+
+  function withBusy(btn, text) {
+    if (!btn) return function () {};
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add('is-busy');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (text || 'Procesando...');
+    return function done() {
+      btn.disabled = false;
+      btn.classList.remove('is-busy');
+      btn.innerHTML = original;
+    };
+  }
+
   function money(v) {
     return '$' + Number(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
@@ -150,17 +186,23 @@
   const saveBtn = document.getElementById('guardarCotBtn');
   if (saveBtn) {
     saveBtn.addEventListener('click', function () {
+      const done = withBusy(saveBtn, 'Guardando...');
       guardarCotizacionManual().catch(function (err) {
         alert('Error: ' + (err.message || err));
-      });
+      }).finally(done);
     });
   }
 
   const planBtn = document.getElementById('programarSrvBtn');
   if (planBtn) {
     planBtn.addEventListener('click', function () {
+      const done = withBusy(planBtn, 'Programando...');
+      showCurtain('Programando servicio...');
       programarServicio().catch(function (err) {
         alert('Error: ' + (err.message || err));
+      }).finally(function () {
+        hideCurtain();
+        done();
       });
     });
   }

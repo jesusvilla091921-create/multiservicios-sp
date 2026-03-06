@@ -51,7 +51,9 @@ function shouldUseCache(action) {
     action === 'cotizaciones' ||
     action === 'cotizacionesArchivadas' ||
     action === 'servicios' ||
-    action === 'agenda';
+    action === 'agenda' ||
+    action === 'configDisponibilidad' ||
+    action === 'disponibilidad';
 }
 
 function isFresh(entry) {
