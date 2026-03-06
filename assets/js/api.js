@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbyrq9rCjrRYT2oB515fx_N-Z6eT4Mnvf1YZwf9i0SRFu6lOFfLvO99urccU7OpfRqOT/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwZL-jO1g3AbePttdQ-_Q1J5eha5jiPP-VLJYPJ4osuD1J0rPYhu2QoZBF--YdH7tmZ/exec';
 const GET_CACHE_TTL_MS = 15000;
 const REQUEST_TIMEOUT_MS = 12000;
 const getCache = new Map();
