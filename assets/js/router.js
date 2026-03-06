@@ -10,6 +10,7 @@
   const loadedStyles = new Set();
   const htmlCache = new Map();
   const scriptCache = new Map();
+  const scriptRunnerCache = new Map();
   let activeLoadToken = 0;
 
   function modulePath(moduleName, fileName) {
@@ -72,8 +73,13 @@
       scriptCache.set(key, source);
     }
 
+    let runner = scriptRunnerCache.get(key);
+    if (!runner) {
+      runner = new Function(source);
+      scriptRunnerCache.set(key, runner);
+    }
     // Ejecutar en cada navegación para reinicializar listeners del módulo.
-    new Function(source)();
+    runner();
   }
 
   function prefetchModule(moduleName) {
@@ -86,7 +92,13 @@
       fetch(modulePath(moduleName, config.js))
         .then(function (resp) { return resp.ok ? resp.text() : ''; })
         .then(function (src) {
-          if (src) scriptCache.set(key, src);
+          if (src) {
+            scriptCache.set(key, src);
+            // Precompilar en idle para bajar costo de primer ejecución.
+            if (!scriptRunnerCache.has(key)) {
+              scriptRunnerCache.set(key, new Function(src));
+            }
+          }
         })
         .catch(function () {});
     }
