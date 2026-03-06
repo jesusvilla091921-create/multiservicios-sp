@@ -704,7 +704,7 @@ function handleGetDashboard(ss) {
     const solicitudesValues = solicitudesSheet.getDataRange().getValues();
     for (let i = 1; i < solicitudesValues.length; i++) {
       const estadoSolicitud = String(solicitudesValues[i][6] || '').toUpperCase().trim();
-      if (estadoSolicitud === 'NUEVA') {
+      if (!estadoSolicitud || estadoSolicitud === 'NUEVA' || estadoSolicitud === 'COTIZANDO') {
         solicitudes += 1;
       }
     }

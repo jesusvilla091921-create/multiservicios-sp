@@ -122,31 +122,34 @@
   async function guardarCotizacion() {
     if (!solicitud) return;
 
-    const conceptos = getConceptos();
-    const total = recalcTotal();
-    if (conceptos.length === 0) {
-      alert('Agrega al menos un concepto con cantidad.');
-      return;
+    try {
+      const conceptos = getConceptos();
+      const total = recalcTotal();
+      if (conceptos.length === 0) {
+        alert('Agrega al menos un concepto con cantidad.');
+        return;
+      }
+
+      const payload = await window.api('/cotizarSolicitud', {
+        idSolicitud: solicitud.id,
+        diagnostico: document.getElementById('cotDiagnostico').value.trim(),
+        conceptos: conceptos,
+        total: total
+      });
+
+      if (!payload || !payload.success) {
+        throw new Error(payload && payload.error ? payload.error : 'No se pudo guardar la cotización.');
+      }
+
+      idCotizacion = payload.idCotizacion;
+      document.getElementById('cotizadorHint').textContent = 'Cotización creada: ' + idCotizacion;
+      document.getElementById('pdfCotBtn').disabled = false;
+      document.getElementById('programarSrvBtn').disabled = false;
+      await cargarCotizacionesRegistradas();
+      alert('Cotización guardada: ' + idCotizacion);
+    } catch (error) {
+      alert('Error al guardar cotización: ' + (error.message || error));
     }
-
-    const payload = await window.api('/cotizarSolicitud', {
-      idSolicitud: solicitud.id,
-      diagnostico: document.getElementById('cotDiagnostico').value.trim(),
-      conceptos: conceptos,
-      total: total
-    });
-
-    if (!payload || !payload.success) {
-      alert('No se pudo guardar la cotización.');
-      return;
-    }
-
-    idCotizacion = payload.idCotizacion;
-    document.getElementById('cotizadorHint').textContent = 'Cotización creada: ' + idCotizacion;
-    document.getElementById('pdfCotBtn').disabled = false;
-    document.getElementById('programarSrvBtn').disabled = false;
-    await cargarCotizacionesRegistradas();
-    alert('Cotización guardada: ' + idCotizacion);
   }
 
   async function generarPdf() {
@@ -194,32 +197,35 @@
       return;
     }
 
-    const fecha = document.getElementById('srvFecha').value;
-    const hora = document.getElementById('srvHora').value;
-    const tecnico = document.getElementById('srvTecnico').value.trim();
-    const total = recalcTotal();
+    try {
+      const fecha = document.getElementById('srvFecha').value;
+      const hora = document.getElementById('srvHora').value;
+      const tecnico = document.getElementById('srvTecnico').value.trim();
+      const total = recalcTotal();
 
-    if (!fecha || !tecnico) {
-      alert('Fecha y técnico son obligatorios.');
-      return;
+      if (!fecha || !tecnico) {
+        alert('Fecha y técnico son obligatorios.');
+        return;
+      }
+
+      const payload = await window.api('/programarServicio', {
+        idSolicitud: solicitud.id,
+        idCotizacion: idCotizacion,
+        fecha: fecha,
+        hora: hora,
+        tecnico: tecnico,
+        total: total
+      });
+
+      if (!payload || !payload.success) {
+        throw new Error(payload && payload.error ? payload.error : 'No se pudo programar el servicio.');
+      }
+
+      alert('Servicio programado: ' + payload.idServicio);
+      window.loadModule('servicios');
+    } catch (error) {
+      alert('Error al programar servicio: ' + (error.message || error));
     }
-
-    const payload = await window.api('/programarServicio', {
-      idSolicitud: solicitud.id,
-      idCotizacion: idCotizacion,
-      fecha: fecha,
-      hora: hora,
-      tecnico: tecnico,
-      total: total
-    });
-
-    if (!payload || !payload.success) {
-      alert('No se pudo programar el servicio.');
-      return;
-    }
-
-    alert('Servicio programado: ' + payload.idServicio);
-    window.loadModule('servicios');
   }
 
   const refreshCotizacionesBtn = document.getElementById('refreshCotizacionesBtn');

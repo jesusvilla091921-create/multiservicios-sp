@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrq9rCjrRYT2oB515fx_N-Z6eT4Mnvf1YZwf9i0SRFu6lOFfLvO99urccU7OpfRqOT/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJA9NRV4hiFOznVK7M4ftB0qFVD3G1_lxpn3N5htlVsQ5S6d50KCg60Xg3v1uovZSE/exec';
     
     const serviceConfig = {
       climatizacion: { 
@@ -356,15 +356,27 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrq9rCjrRYT2oB
       });
       
       try {
-        await fetch(APPS_SCRIPT_URL, {
+        const response = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
+          // Enviar texto JSON evita preflight CORS por headers custom.
           body: JSON.stringify(datosParaCloud)
         });
+
+        if (!response.ok) {
+          throw new Error('Error HTTP ' + response.status);
+        }
+
+        const raw = await response.text();
+        const payload = JSON.parse(raw);
+        if (!payload || !payload.success) {
+          throw new Error(payload && payload.error ? payload.error : 'No se pudo guardar la solicitud');
+        }
+
         console.log('✅ Solicitud guardada en la nube con ID:', folio);
       } catch (error) {
         console.error('Error al guardar en nube:', error);
+        alert('No se pudo guardar tu solicitud en el sistema. Inténtalo de nuevo.');
+        return;
       }
       
       const diagnosticText = [];

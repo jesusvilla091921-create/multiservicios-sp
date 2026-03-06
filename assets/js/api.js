@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbyrq9rCjrRYT2oB515fx_N-Z6eT4Mnvf1YZwf9i0SRFu6lOFfLvO99urccU7OpfRqOT/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzJA9NRV4hiFOznVK7M4ftB0qFVD3G1_lxpn3N5htlVsQ5S6d50KCg60Xg3v1uovZSE/exec';
 
 function normalizeEndpoint(endpoint) {
   return String(endpoint || '').replace(/^\//, '');
@@ -29,9 +29,7 @@ async function api(endpoint, data = null) {
   const payload = Object.assign({ action: action }, data);
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    // Enviar texto JSON evita preflight de CORS por content-type custom.
     body: JSON.stringify(payload)
   });
 
@@ -39,7 +37,12 @@ async function api(endpoint, data = null) {
     throw new Error('Error HTTP ' + response.status);
   }
 
-  return response.json();
+  const raw = await response.text();
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    throw new Error('Respuesta no JSON del backend');
+  }
 }
 
 window.api = api;
