@@ -208,6 +208,18 @@ function doPost(e) {
       return handleProgramarServicio(data, ss);
     }
 
+    if (action === 'updateServicioEstado') {
+      return handleUpdateServicioEstado(data, ss);
+    }
+
+    if (action === 'eliminarCotizacion') {
+      return handleEliminarCotizacion(data, ss);
+    }
+
+    if (action === 'crearCotizacionManual') {
+      return handleCrearCotizacionManual(data, ss);
+    }
+
     if (action === 'nuevaCotizacion') {
       return handleNewCotizacion(data, ss);
     }
@@ -466,6 +478,190 @@ function handleProgramarServicio(data, ss) {
   });
 }
 
+function parseScheduledDateTime(fecha, hora) {
+  const dateStr = String(fecha || '').trim();
+  const timeStr = String(hora || '').trim() || '00:00';
+  if (!dateStr) return null;
+
+  const dt = new Date(dateStr + 'T' + timeStr + ':00');
+  if (isNaN(dt.getTime())) return null;
+  return dt;
+}
+
+function canCloseService(fecha, hora, now) {
+  const scheduled = parseScheduledDateTime(fecha, hora);
+  if (!scheduled) return false;
+  const twoHoursLater = new Date(scheduled.getTime() + (2 * 60 * 60 * 1000));
+  return (now || new Date()).getTime() >= twoHoursLater.getTime();
+}
+
+function handleUpdateServicioEstado(data, ss) {
+  const serviciosSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.SERVICIOS);
+  const cotSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.COTIZACIONES);
+  if (!serviciosSheet) {
+    throw new Error('No existe la hoja de servicios');
+  }
+
+  const idServicio = String(data.idServicio || '').trim();
+  const nuevoEstado = String(data.estado || '').trim().toUpperCase();
+  const notas = String(data.notas || '').trim();
+  const nuevaFecha = String(data.nuevaFecha || '').trim();
+  const nuevaHora = String(data.nuevaHora || '').trim();
+
+  if (!idServicio || !nuevoEstado) {
+    throw new Error('idServicio y estado son obligatorios');
+  }
+
+  const allowed = ['REALIZADO', 'CANCELADO', 'POSPUESTO'];
+  if (allowed.indexOf(nuevoEstado) === -1) {
+    throw new Error('Estado no permitido');
+  }
+
+  const values = serviciosSheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    const rowId = String(values[i][0] || '').trim();
+    if (rowId !== idServicio) continue;
+
+    const estadoActual = String(values[i][10] || '').trim().toUpperCase();
+    if (estadoActual === 'REALIZADO' || estadoActual === 'CANCELADO') {
+      throw new Error('Este servicio ya fue cerrado');
+    }
+
+    const fechaActual = values[i][7];
+    const horaActual = values[i][8];
+    if (!canCloseService(fechaActual, horaActual, new Date())) {
+      throw new Error('Solo puedes cerrar/posponer después de 2 horas de la fecha y hora programada');
+    }
+
+    if (nuevoEstado === 'POSPUESTO') {
+      if (!nuevaFecha) {
+        throw new Error('Para posponer necesitas nuevaFecha');
+      }
+      serviciosSheet.getRange(i + 1, 8).setValue(nuevaFecha);
+      if (nuevaHora) {
+        serviciosSheet.getRange(i + 1, 9).setValue(nuevaHora);
+      }
+    }
+
+    serviciosSheet.getRange(i + 1, 11).setValue(nuevoEstado);
+
+    const totalServicio = Number(values[i][11] || 0);
+    const idCotizacion = String(values[i][2] || '').trim();
+    if (cotSheet && idCotizacion) {
+      const cotValues = cotSheet.getDataRange().getValues();
+      for (let c = 1; c < cotValues.length; c++) {
+        if (String(cotValues[c][0] || '').trim() === idCotizacion) {
+          const cotEstado = (nuevoEstado === 'REALIZADO') ? 'REALIZADA' : nuevoEstado;
+          const cotNotas = (notas ? notas + ' | ' : '') + 'SERVICIO:' + nuevoEstado + ' TOTAL:' + totalServicio;
+          cotSheet.getRange(c + 1, 18).setValue(cotEstado);
+          cotSheet.getRange(c + 1, 19).setValue(cotNotas);
+          break;
+        }
+      }
+    }
+
+    logEvent(ss, 'SERVICIO', idServicio, 'Servicio actualizado a ' + nuevoEstado);
+    return createCorsResponse({
+      success: true,
+      idServicio: idServicio,
+      estado: nuevoEstado,
+      message: 'Servicio actualizado'
+    });
+  }
+
+  throw new Error('Servicio no encontrado');
+}
+
+function handleEliminarCotizacion(data, ss) {
+  const cotSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.COTIZACIONES);
+  const serviciosSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.SERVICIOS);
+  if (!cotSheet) {
+    throw new Error('No existe la hoja de cotizaciones');
+  }
+
+  const idCotizacion = String(data.idCotizacion || '').trim();
+  if (!idCotizacion) {
+    throw new Error('idCotizacion es obligatorio');
+  }
+
+  if (serviciosSheet) {
+    const srvValues = serviciosSheet.getDataRange().getValues();
+    for (let i = 1; i < srvValues.length; i++) {
+      if (String(srvValues[i][2] || '').trim() === idCotizacion) {
+        throw new Error('No se puede eliminar: la cotización tiene servicios asociados');
+      }
+    }
+  }
+
+  const cotValues = cotSheet.getDataRange().getValues();
+  for (let i = 1; i < cotValues.length; i++) {
+    if (String(cotValues[i][0] || '').trim() === idCotizacion) {
+      cotSheet.deleteRow(i + 1);
+      logEvent(ss, 'COTIZACION', idCotizacion, 'Cotizacion eliminada');
+      return createCorsResponse({ success: true, message: 'Cotizacion eliminada' });
+    }
+  }
+
+  throw new Error('Cotizacion no encontrada');
+}
+
+function handleCrearCotizacionManual(data, ss) {
+  const cotSheet = ss.getSheetByName(CONFIG.SHEET_NAMES.COTIZACIONES);
+  if (!cotSheet) {
+    throw new Error('No existe la hoja de cotizaciones');
+  }
+
+  const cliente = String(data.cliente || data.nombreCliente || '').trim();
+  const telefono = String(data.telefono || '').trim();
+  const servicio = String(data.servicio || '').trim();
+  const direccion = String(data.direccion || '').trim();
+  const diagnostico = String(data.diagnostico || '').trim();
+  const conceptos = Array.isArray(data.conceptos) ? data.conceptos : [];
+  const total = Number(data.total || 0);
+
+  if (!cliente || !servicio) {
+    throw new Error('cliente y servicio son obligatorios');
+  }
+
+  const idCotizacion = generateCotizacionId(new Date());
+  const payload = {
+    manual: true,
+    idSolicitud: '',
+    conceptos: conceptos,
+    diagnostico: diagnostico,
+    total: total
+  };
+
+  cotSheet.appendRow([
+    idCotizacion,
+    new Date(),
+    servicio,
+    cliente,
+    telefono,
+    direccion,
+    telefono,
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    '',
+    JSON.stringify(payload),
+    idCotizacion,
+    'PENDIENTE',
+    'TOTAL:' + total
+  ]);
+
+  logEvent(ss, 'COTIZACION', idCotizacion, 'Cotizacion manual creada');
+  return createCorsResponse({
+    success: true,
+    idCotizacion: idCotizacion,
+    message: 'Cotizacion manual creada'
+  });
+}
+
 function handleNewCotizacion(data, ss) {
   const sheet = ss.getSheetByName(CONFIG.SHEET_NAMES.COTIZACIONES);
 
@@ -698,7 +894,6 @@ function handleGetDashboard(ss) {
   let cotizaciones = 0;
   let servicios = 0;
   let ingresos = 0;
-  let ingresosFromCotizaciones = 0;
 
   if (solicitudesSheet) {
     const solicitudesValues = solicitudesSheet.getDataRange().getValues();
@@ -716,20 +911,9 @@ function handleGetDashboard(ss) {
       const row = cotValues[i];
       const timestamp = row[1];
       const estado = String(row[17] || '').toUpperCase().trim();
-      const notas = String(row[18] || '');
 
       if (estado === 'PENDIENTE' || estado === 'COTIZANDO' || estado === 'NUEVA') {
         cotizaciones += 1;
-      }
-
-      if (timestamp instanceof Date) {
-        const rowMonth = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'yyyy-MM');
-        if (rowMonth === currentMonth) {
-          const parsedIngreso = parseIngresoFromNotas(notas);
-          if (parsedIngreso > 0) {
-            ingresosFromCotizaciones += parsedIngreso;
-          }
-        }
       }
     }
   }
@@ -742,18 +926,14 @@ function handleGetDashboard(ss) {
       const totalServicio = Number(serviceValues[i][11] || 0);
       const fechaNormalizada = normalizeDateValue(fechaValue, Session.getScriptTimeZone());
 
-      if (fechaNormalizada === todayKey && estadoServicio !== 'CANCELADO') {
+      if (fechaNormalizada === todayKey && estadoServicio !== 'CANCELADO' && estadoServicio !== 'REALIZADO') {
         servicios += 1;
       }
 
-      if (fechaNormalizada.indexOf(currentMonth) === 0 && totalServicio > 0) {
+      if (estadoServicio === 'REALIZADO' && fechaNormalizada.indexOf(currentMonth) === 0 && totalServicio > 0) {
         ingresos += totalServicio;
       }
     }
-  }
-
-  if (ingresos === 0 && ingresosFromCotizaciones > 0) {
-    ingresos = ingresosFromCotizaciones;
   }
 
   return createCorsResponse({
@@ -804,7 +984,11 @@ function handleGetServicios(ss) {
   }
 
   const servicios = [];
+  const now = new Date();
   for (let i = 1; i < values.length; i++) {
+    const fecha = values[i][7] || '';
+    const hora = values[i][8] || '';
+    const estado = values[i][10] || '';
     servicios.push({
       id: values[i][0] || '',
       timestamp: values[i][1] || '',
@@ -813,11 +997,12 @@ function handleGetServicios(ss) {
       cliente: values[i][4] || '',
       telefono: values[i][5] || '',
       servicio: values[i][6] || '',
-      fecha: values[i][7] || '',
-      hora: values[i][8] || '',
+      fecha: fecha,
+      hora: hora,
       tecnico: values[i][9] || '',
-      estado: values[i][10] || '',
-      total: values[i][11] || 0
+      estado: estado,
+      total: values[i][11] || 0,
+      puedeCerrar: canCloseService(fecha, hora, now)
     });
   }
 

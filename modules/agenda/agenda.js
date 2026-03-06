@@ -25,12 +25,19 @@
     });
 
     const dates = Object.keys(groups).sort();
-    wrap.innerHTML = dates.map(function (date) {
+    wrap.innerHTML = '<div class="agenda-grid">' + dates.map(function (date) {
       const items = groups[date].map(function (s) {
-        return '<li>' + e(s.hora || '--:--') + ' · ' + e(s.servicio) + ' · ' + e(s.cliente) + ' · ' + e(s.tecnico) + '</li>';
+        return '<div class="agenda-item">' +
+          '<div><strong>' + e(s.hora || '--:--') + '</strong> · ' + e(s.servicio) + '</div>' +
+          '<div>' + e(s.cliente) + ' · ' + e(s.tecnico) + '</div>' +
+          '<div class="agenda-status">' + e(s.estado || 'Programado') + '</div>' +
+          '</div>';
       }).join('');
-      return '<div class="panel-card" style="margin-bottom:10px;"><h3 style="margin:0 0 8px;">' + e(date) + '</h3><ul style="margin:0;padding-left:18px;">' + items + '</ul></div>';
-    }).join('');
+      return '<article class="agenda-day-card">' +
+        '<h3>' + e(date) + '</h3>' +
+        '<div class="agenda-day-items">' + items + '</div>' +
+        '</article>';
+    }).join('') + '</div>';
   }
 
   cargarAgenda().catch(function (err) {

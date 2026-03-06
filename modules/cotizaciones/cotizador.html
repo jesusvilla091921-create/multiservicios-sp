@@ -5,9 +5,14 @@
   <div class="panel-card" style="margin-bottom:20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap; margin-bottom:16px;">
       <h3 style="margin:0; font-size:1.2rem;">Cotizaciones recientes</h3>
-      <button type="button" id="refreshCotizacionesBtn" class="btn-secondary">
-        <i class="fas fa-sync-alt"></i> Actualizar lista
-      </button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" id="nuevaCotizacionManualBtn" class="btn-primary">
+          <i class="fas fa-plus"></i> Nueva cotización manual
+        </button>
+        <button type="button" id="refreshCotizacionesBtn" class="btn-secondary">
+          <i class="fas fa-sync-alt"></i> Actualizar lista
+        </button>
+      </div>
     </div>
     <div class="table-wrap" style="margin-top:0;">
       <table class="solicitudes-table" id="tablaCotizaciones">
@@ -18,10 +23,11 @@
             <th>Servicio</th>
             <th>Estado</th>
             <th>Total</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td colspan="5">Cargando...</td></tr>
+          <tr><td colspan="6">Cargando...</td></tr>
         </tbody>
       </table>
     </div>
@@ -32,19 +38,19 @@
     <div class="grid2">
       <div>
         <label class="input-group"><i class="far fa-user"></i> Cliente</label>
-        <input id="cotCliente" class="input-lite" type="text" readonly>
+        <input id="cotCliente" class="input-lite" type="text">
       </div>
       <div>
         <label class="input-group"><i class="fas fa-phone-alt"></i> Teléfono</label>
-        <input id="cotTelefono" class="input-lite" type="text" readonly>
+        <input id="cotTelefono" class="input-lite" type="text">
       </div>
       <div>
         <label class="input-group"><i class="fas fa-wrench"></i> Servicio</label>
-        <input id="cotServicio" class="input-lite" type="text" readonly>
+        <input id="cotServicio" class="input-lite" type="text">
       </div>
       <div>
         <label class="input-group"><i class="fas fa-map-marker-alt"></i> Dirección</label>
-        <input id="cotDireccion" class="input-lite" type="text" readonly>
+        <input id="cotDireccion" class="input-lite" type="text">
       </div>
     </div>
 

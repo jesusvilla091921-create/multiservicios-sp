@@ -1,5 +1,10 @@
 <section class="module-view">
-  <h2 class="module-title">Servicios</h2>
+  <div class="solicitudes-head">
+    <h2 class="module-title">Servicios</h2>
+    <button type="button" id="refreshServicios" class="btn-secondary">
+      <i class="fas fa-sync-alt"></i> Actualizar
+    </button>
+  </div>
   <p class="module-muted">Trabajos programados y en ejecución.</p>
 
   <div class="table-wrap">
@@ -12,6 +17,7 @@
           <th>Fecha / Hora</th>
           <th>Técnico</th>
           <th>Estado</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody></tbody>
