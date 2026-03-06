@@ -2,12 +2,14 @@
   <h2 class="module-title">Cotizaciones</h2>
   <p class="module-muted" id="cotizadorHint">Selecciona una solicitud para comenzar.</p>
 
-  <div class="panel-card" style="margin-bottom:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-      <h3 style="margin:0;">Cotizaciones recientes</h3>
-      <button type="button" id="refreshCotizacionesBtn" class="btn-secondary">Actualizar lista</button>
+  <div class="panel-card" style="margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap; margin-bottom:16px;">
+      <h3 style="margin:0; font-size:1.2rem;">Cotizaciones recientes</h3>
+      <button type="button" id="refreshCotizacionesBtn" class="btn-secondary">
+        <i class="fas fa-sync-alt"></i> Actualizar lista
+      </button>
     </div>
-    <div style="overflow:auto;margin-top:10px;">
+    <div class="table-wrap" style="margin-top:0;">
       <table class="solicitudes-table" id="tablaCotizaciones">
         <thead>
           <tr>
@@ -25,47 +27,54 @@
     </div>
   </div>
 
-  <div class="panel-card" id="cotizadorPanel" style="display:none;">
+  <div class="panel-card" id="cotizadorPanel" style="display:none; margin-top:24px;">
+    <h3 style="margin-top:0; margin-bottom:16px;">Nueva cotización</h3>
     <div class="grid2">
       <div>
-        <label>Cliente</label>
+        <label class="input-group"><i class="far fa-user"></i> Cliente</label>
         <input id="cotCliente" class="input-lite" type="text" readonly>
       </div>
       <div>
-        <label>Teléfono</label>
+        <label class="input-group"><i class="fas fa-phone-alt"></i> Teléfono</label>
         <input id="cotTelefono" class="input-lite" type="text" readonly>
       </div>
       <div>
-        <label>Servicio</label>
+        <label class="input-group"><i class="fas fa-wrench"></i> Servicio</label>
         <input id="cotServicio" class="input-lite" type="text" readonly>
       </div>
       <div>
-        <label>Dirección</label>
+        <label class="input-group"><i class="fas fa-map-marker-alt"></i> Dirección</label>
         <input id="cotDireccion" class="input-lite" type="text" readonly>
       </div>
     </div>
 
-    <div class="panel-card" style="margin-top:12px;">
-      <h3 style="margin-top:0;">Conceptos</h3>
+    <div class="panel-card" style="margin-top:16px; background: var(--surface-alt);">
+      <h4 style="margin-top:0;">Conceptos</h4>
       <div id="conceptosWrap"></div>
-      <button type="button" class="btn-secondary" id="addConceptoBtn">Agregar concepto</button>
-      <div style="margin-top:12px;">
-        <label>Diagnóstico</label>
+      <button type="button" class="btn-secondary" id="addConceptoBtn" style="margin: 12px 0;">
+        <i class="fas fa-plus-circle"></i> Agregar concepto
+      </button>
+      <div style="margin-top:16px;">
+        <label class="input-group"><i class="fas fa-stethoscope"></i> Diagnóstico</label>
         <textarea id="cotDiagnostico" class="input-lite" rows="3" placeholder="Describe hallazgos técnicos"></textarea>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px; font-size:1.2rem;">
         <strong>Total:</strong>
-        <strong id="cotTotal">$0.00</strong>
+        <strong id="cotTotal" style="color: var(--primary);">$0.00</strong>
       </div>
     </div>
 
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-      <button type="button" id="guardarCotBtn" class="btn-primary">Guardar cotización</button>
-      <button type="button" id="pdfCotBtn" class="btn-secondary" disabled>Generar PDF</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 10px;">
+      <button type="button" id="guardarCotBtn" class="btn-primary">
+        <i class="fas fa-save"></i> Guardar cotización
+      </button>
+      <button type="button" id="pdfCotBtn" class="btn-secondary" disabled>
+        <i class="fas fa-file-pdf"></i> Generar PDF
+      </button>
     </div>
 
-    <div class="panel-card" style="margin-top:12px;">
-      <h3 style="margin-top:0;">Programar servicio</h3>
+    <div class="panel-card" style="margin-top:16px;">
+      <h4 style="margin-top:0;">Programar servicio</h4>
       <div class="grid2">
         <div>
           <label>Fecha</label>
@@ -80,7 +89,9 @@
           <input id="srvTecnico" class="input-lite" type="text" placeholder="Nombre del técnico">
         </div>
       </div>
-      <button type="button" id="programarSrvBtn" class="btn-primary" disabled style="margin-top:10px;">Programar servicio</button>
+      <button type="button" id="programarSrvBtn" class="btn-primary" disabled style="margin-top:16px;">
+        <i class="fas fa-calendar-check"></i> Programar servicio
+      </button>
     </div>
   </div>
 </section>

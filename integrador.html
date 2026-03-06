@@ -3,21 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multiservicios SP · Integrador</title>
+  <title>Multiservicios SP · Panel de Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/global.css">
   <link rel="stylesheet" href="assets/css/integrador.css">
 </head>
 <body>
   <section id="authGate" class="auth-gate" aria-live="polite">
     <div class="auth-card">
-      <h2>Acceso Integrador</h2>
-      <p>Inicia sesión para administrar solicitudes, cotizaciones y servicios.</p>
+      <div class="auth-header">
+        <i class="fas fa-lock"></i>
+        <h2>Acceso Privado</h2>
+      </div>
+      <p>Ingresa tus credenciales para administrar el sistema.</p>
       <form id="authForm" class="auth-form">
-        <label for="authUser">Usuario</label>
-        <input id="authUser" class="input-lite" type="text" autocomplete="username" required>
-        <label for="authPass">Contraseña</label>
-        <input id="authPass" class="input-lite" type="password" autocomplete="current-password" required>
-        <button type="submit" class="btn-primary">Entrar</button>
+        <div class="input-group">
+          <label for="authUser"><i class="far fa-user"></i> Usuario</label>
+          <input id="authUser" class="input-lite" type="text" placeholder="admin" autocomplete="username" required>
+        </div>
+        <div class="input-group">
+          <label for="authPass"><i class="fas fa-key"></i> Contraseña</label>
+          <input id="authPass" class="input-lite" type="password" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn-primary btn-full">Entrar al panel</button>
         <small id="authError" class="auth-error" aria-live="assertive"></small>
       </form>
     </div>
@@ -25,22 +36,39 @@
 
   <div class="layout">
     <aside class="sidebar">
-      <div class="brand">
-        <img src="assets/img/logo-multiservicios-sp.png" alt="Multiservicios SP" class="brand-logo">
-        <div class="brand-text">
-          <strong>MULTISERVICIOS SP</strong>
-          <small>Integrador técnico</small>
+      <div class="sidebar-header">
+        <div class="brand">
+          <img src="assets/img/logo-multiservicios-sp.png" alt="Multiservicios SP" class="brand-logo">
+          <div class="brand-text">
+            <strong>MULTISERVICIOS SP</strong>
+            <span>Panel de gestión</span>
+          </div>
         </div>
       </div>
 
       <nav class="menu">
-        <button type="button" data-module="dashboard" class="menu-btn is-active">Tablero</button>
-        <button type="button" data-module="solicitudes" class="menu-btn">Solicitudes</button>
-        <button type="button" data-module="cotizaciones" class="menu-btn">Cotizaciones</button>
-        <button type="button" data-module="servicios" class="menu-btn">Servicios</button>
-        <button type="button" data-module="agenda" class="menu-btn">Agenda</button>
+        <button type="button" data-module="dashboard" class="menu-btn is-active">
+          <i class="fas fa-chart-pie"></i> <span>Tablero</span>
+        </button>
+        <button type="button" data-module="solicitudes" class="menu-btn">
+          <i class="fas fa-inbox"></i> <span>Solicitudes</span>
+        </button>
+        <button type="button" data-module="cotizaciones" class="menu-btn">
+          <i class="fas fa-file-invoice-dollar"></i> <span>Cotizaciones</span>
+        </button>
+        <button type="button" data-module="servicios" class="menu-btn">
+          <i class="fas fa-tools"></i> <span>Servicios</span>
+        </button>
+        <button type="button" data-module="agenda" class="menu-btn">
+          <i class="fas fa-calendar-alt"></i> <span>Agenda</span>
+        </button>
       </nav>
-      <button type="button" id="logoutBtn" class="menu-btn logout-btn">Cerrar sesión</button>
+
+      <div class="sidebar-footer">
+        <button type="button" id="logoutBtn" class="menu-btn logout-btn">
+          <i class="fas fa-sign-out-alt"></i> <span>Cerrar sesión</span>
+        </button>
+      </div>
     </aside>
 
     <main class="workspace-wrap">
