@@ -85,6 +85,27 @@
     return total;
   }
 
+  function extractSlotFromNotas(notasRaw) {
+    const notas = String(notasRaw || '');
+    const re = /\|\s*SLOT:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})\s+TEC:\s*([^|]+)\s*$/i;
+    const match = notas.match(re);
+    if (!match) {
+      return {
+        notas: notas.trim(),
+        fecha: '',
+        hora: '',
+        tecnico: ''
+      };
+    }
+    const cleaned = notas.replace(re, '').replace(/\s+\|\s*$/, '').trim();
+    return {
+      notas: cleaned,
+      fecha: String(match[1] || '').trim(),
+      hora: String(match[2] || '').trim(),
+      tecnico: String(match[3] || '').trim()
+    };
+  }
+
   function fillCotizador(s) {
     solicitudActiva = s;
     idCotizacionActiva = null;
@@ -100,7 +121,11 @@
     document.getElementById('solCotTelefono').value = s.telefono || '';
     document.getElementById('solCotServicio').value = s.servicio || '';
     document.getElementById('solCotDireccion').value = s.direccion || '';
-    document.getElementById('solCotDiagnostico').value = s.notas || '';
+    const parsed = extractSlotFromNotas(s.notas || '');
+    document.getElementById('solCotDiagnostico').value = parsed.notas || '';
+    document.getElementById('solSrvFecha').value = parsed.fecha || '';
+    document.getElementById('solSrvHora').value = parsed.hora || '';
+    document.getElementById('solSrvTecnico').value = parsed.tecnico || '';
 
     const wrap = document.getElementById('solConceptosWrap');
     wrap.innerHTML = '';
