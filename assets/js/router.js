@@ -1,4 +1,6 @@
 (function () {
+  const BUILD_VERSION = '20260307a';
+
   const MODULE_CONFIG = {
     dashboard: { html: 'dashboard.html', js: 'dashboard.js', css: 'dashboard.css', title: 'Tablero' },
     solicitudes: { html: 'solicitudes.html', js: 'solicitudes.js', css: 'solicitudes.css', title: 'Solicitudes' },
@@ -15,7 +17,7 @@
   let activeLoadToken = 0;
 
   function modulePath(moduleName, fileName) {
-    return 'modules/' + moduleName + '/' + fileName;
+    return 'modules/' + moduleName + '/' + fileName + '?v=' + BUILD_VERSION;
   }
 
   function setActiveButton(moduleName) {
@@ -53,7 +55,7 @@
       return htmlCache.get(key);
     }
 
-    const resp = await fetch(modulePath(moduleName, config.html));
+    const resp = await fetch(modulePath(moduleName, config.html), { cache: 'no-store' });
     if (!resp.ok) {
       throw new Error('No se encontró el módulo: ' + moduleName);
     }
@@ -66,7 +68,7 @@
     const key = moduleName + ':js';
     let source = scriptCache.get(key);
     if (!source) {
-      const scriptResp = await fetch(modulePath(moduleName, config.js));
+      const scriptResp = await fetch(modulePath(moduleName, config.js), { cache: 'no-store' });
       if (!scriptResp.ok) {
         throw new Error('No se encontró el script del módulo: ' + moduleName);
       }
@@ -90,7 +92,7 @@
     getModuleHtml(moduleName, config).catch(function () {});
     const key = moduleName + ':js';
     if (!scriptCache.has(key)) {
-      fetch(modulePath(moduleName, config.js))
+      fetch(modulePath(moduleName, config.js), { cache: 'no-store' })
         .then(function (resp) { return resp.ok ? resp.text() : ''; })
         .then(function (src) {
           if (src) {
