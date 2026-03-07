@@ -132,138 +132,182 @@
   }
 
   async function generarPdf() {
-    if (!idCotizacion) return;
-
-    if (!window.jspdf || !window.jspdf.jsPDF) {
-      await new Promise(function (resolve, reject) {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-    }
-
-    showCurtain('Generando PDF...');
     try {
+      if (!idCotizacion) {
+        throw new Error('No hay cotización para generar PDF');
+      }
+
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        await new Promise(function (resolve, reject) {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      showCurtain('Generando PDF...');
+
       const jsPDF = window.jspdf.jsPDF;
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-      const conceptos = getConceptos();
-      const total = recalcTotal();
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const COLOR_PRIMARY = [44, 62, 80];
+      const COLOR_SECONDARY = [52, 73, 94];
+      const COLOR_ACCENT = [41, 128, 185];
+      const COLOR_TEXT = [52, 52, 52];
+      const COLOR_TEXT_LIGHT = [127, 140, 141];
+      const COLOR_BORDER = [236, 240, 241];
+
       const cliente = document.getElementById('cotCliente').value.trim();
       const telefono = document.getElementById('cotTelefono').value.trim();
       const servicio = document.getElementById('cotServicio').value.trim();
       const direccion = document.getElementById('cotDireccion').value.trim();
       const diagnostico = document.getElementById('cotDiagnostico').value.trim();
-      const fechaActual = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+      const conceptos = getConceptos();
+      const total = recalcTotal();
+      const fechaActual = new Date().toLocaleDateString('es-MX', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const folioSolicitud = 'MANUAL';
 
-    const COLOR_PRIMARY = [41, 128, 185];
-    const COLOR_SECONDARY = [52, 73, 94];
-    const COLOR_ACCENT = [46, 204, 113];
-    const COLOR_TEXT = [51, 51, 51];
-    const COLOR_LIGHT_GRAY = [236, 240, 241];
-    const COLOR_BORDER = [189, 195, 199];
+      doc.setDrawColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
+      doc.setLineWidth(0.3);
+      doc.line(20, 15, 190, 15);
 
-    doc.setFillColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
-    doc.rect(0, 0, 216, 12, 'F');
-    doc.setFontSize(20);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.text('MULTISERVICIOS SP', 14, 9);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('FOLIO: ' + idCotizacion, 162, 6);
-    doc.text(fechaActual, 162, 10);
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
-    doc.text('DATOS DEL CLIENTE', 14, 25);
-    doc.setDrawColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
-    doc.setLineWidth(0.5);
-    doc.line(14, 27, 200, 27);
-
-    doc.setFillColor(COLOR_LIGHT_GRAY[0], COLOR_LIGHT_GRAY[1], COLOR_LIGHT_GRAY[2]);
-    doc.roundedRect(14, 30, 90, 25, 2, 2, 'F');
-    doc.roundedRect(108, 30, 90, 25, 2, 2, 'F');
-    doc.setFontSize(10);
-    doc.setTextColor(COLOR_TEXT[0], COLOR_TEXT[1], COLOR_TEXT[2]);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Cliente:', 18, 38);
-    doc.text('Teléfono:', 18, 46);
-    doc.setFont('helvetica', 'normal');
-    doc.text(cliente, 40, 38);
-    doc.text(telefono, 40, 46);
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Servicio:', 112, 38);
-    doc.text('Dirección:', 112, 46);
-    doc.setFont('helvetica', 'normal');
-    doc.text(servicio, 132, 38);
-    doc.text(direccion.substring(0, 25) + (direccion.length > 25 ? '...' : ''), 132, 46);
-
-    if (diagnostico) {
-      doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
-      doc.roundedRect(14, 60, 184, 20, 2, 2, 'S');
+      doc.setFontSize(22);
+      doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
       doc.setFont('helvetica', 'bold');
-      doc.text('Diagnóstico:', 18, 68);
+      doc.text('MULTISERVICIOS SP', 20, 28);
+      doc.setFontSize(8);
+      doc.setTextColor(COLOR_TEXT_LIGHT[0], COLOR_TEXT_LIGHT[1], COLOR_TEXT_LIGHT[2]);
       doc.setFont('helvetica', 'normal');
-      doc.text(diagnostico.substring(0, 70) + (diagnostico.length > 70 ? '...' : ''), 18, 75);
-    }
+      doc.text('Soluciones profesionales', 20, 34);
 
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
-    doc.text('CONCEPTOS Y SERVICIOS', 14, diagnostico ? 90 : 75);
-    doc.line(14, diagnostico ? 92 : 77, 200, diagnostico ? 92 : 77);
+      doc.setFontSize(10);
+      doc.setTextColor(COLOR_TEXT[0], COLOR_TEXT[1], COLOR_TEXT[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.text('COTIZACIÓN', 150, 24);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(COLOR_TEXT_LIGHT[0], COLOR_TEXT_LIGHT[1], COLOR_TEXT_LIGHT[2]);
+      doc.text('Folio: ' + idCotizacion, 150, 30);
+      doc.text('Fecha: ' + fechaActual, 150, 35);
+      doc.text('Solicitud: ' + folioSolicitud, 150, 40);
 
-    const startY = diagnostico ? 98 : 83;
-    doc.setFillColor(COLOR_SECONDARY[0], COLOR_SECONDARY[1], COLOR_SECONDARY[2]);
-    doc.rect(14, startY - 4, 184, 8, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('DESCRIPCIÓN', 16, startY);
-    doc.text('CANT', 120, startY);
-    doc.text('PRECIO UNIT.', 140, startY);
-    doc.text('IMPORTE', 175, startY);
+      doc.setFontSize(11);
+      doc.setTextColor(COLOR_SECONDARY[0], COLOR_SECONDARY[1], COLOR_SECONDARY[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DATOS DEL CLIENTE', 20, 55);
+      doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+      doc.setLineWidth(0.2);
+      doc.line(20, 57, 190, 57);
 
-    doc.setTextColor(COLOR_TEXT[0], COLOR_TEXT[1], COLOR_TEXT[2]);
-    doc.setFont('helvetica', 'normal');
-    let y = startY + 6;
-    conceptos.forEach(function (c, idx) {
-      if (y > 250) {
-        doc.addPage();
-        y = 20;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(COLOR_TEXT[0], COLOR_TEXT[1], COLOR_TEXT[2]);
+      doc.text('Cliente:', 20, 65);
+      doc.text('Teléfono:', 20, 72);
+      doc.text('Dirección:', 20, 79);
+      doc.text('Servicio:', 110, 65);
+      doc.text(cliente || '—', 45, 65);
+      doc.text(telefono || '—', 45, 72);
+      const direccionLines = doc.splitTextToSize(direccion || '—', 80);
+      doc.text(direccionLines, 45, 79);
+      doc.text(servicio || '—', 130, 65);
+
+      if (diagnostico) {
+        const yStart = direccionLines.length > 1 ? 90 : 86;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(COLOR_SECONDARY[0], COLOR_SECONDARY[1], COLOR_SECONDARY[2]);
+        doc.text('DIAGNÓSTICO', 20, yStart);
+        doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+        doc.line(20, yStart + 2, 190, yStart + 2);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(COLOR_TEXT[0], COLOR_TEXT[1], COLOR_TEXT[2]);
+        const diagnosticLines = doc.splitTextToSize(diagnostico, 170);
+        doc.text(diagnosticLines, 20, yStart + 10);
       }
-      if (idx % 2 === 0) {
-        doc.setFillColor(COLOR_LIGHT_GRAY[0], COLOR_LIGHT_GRAY[1], COLOR_LIGHT_GRAY[2]);
-        doc.rect(14, y - 4, 184, 7, 'F');
+
+      let startY = diagnostico ? (direccionLines.length > 1 ? 120 : 110) : (direccionLines.length > 1 ? 100 : 96);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(COLOR_SECONDARY[0], COLOR_SECONDARY[1], COLOR_SECONDARY[2]);
+      doc.text('CONCEPTOS', 20, startY);
+      doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+      doc.line(20, startY + 2, 190, startY + 2);
+
+      const tableY = startY + 10;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(COLOR_TEXT_LIGHT[0], COLOR_TEXT_LIGHT[1], COLOR_TEXT_LIGHT[2]);
+      doc.text('DESCRIPCIÓN', 20, tableY);
+      doc.text('CANT', 130, tableY);
+      doc.text('PRECIO UNIT.', 150, tableY);
+      doc.text('IMPORTE', 180, tableY);
+      doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+      doc.setLineWidth(0.1);
+      doc.line(20, tableY + 1, 190, tableY + 1);
+
+      let y = tableY + 8;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(COLOR_TEXT[0], COLOR_TEXT[1], COLOR_TEXT[2]);
+      conceptos.forEach(function (c) {
+        if (y > 250) {
+          doc.addPage();
+          y = 30;
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(COLOR_TEXT_LIGHT[0], COLOR_TEXT_LIGHT[1], COLOR_TEXT_LIGHT[2]);
+          doc.text('DESCRIPCIÓN', 20, y - 10);
+          doc.text('CANT', 130, y - 10);
+          doc.text('PRECIO UNIT.', 150, y - 10);
+          doc.text('IMPORTE', 180, y - 10);
+          doc.line(20, y - 9, 190, y - 9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(COLOR_TEXT[0], COLOR_TEXT[1], COLOR_TEXT[2]);
+        }
+        const descripcion = c.desc.length > 50 ? c.desc.substring(0, 47) + '...' : c.desc;
+        doc.text(descripcion, 20, y);
+        doc.text(c.cant.toString(), 135, y, { align: 'right' });
+        doc.text(money(c.precio), 160, y, { align: 'right' });
+        doc.text(money(c.importe), 190, y, { align: 'right' });
+        y += 7;
+      });
+
+      y += 5;
+      doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+      doc.setLineWidth(0.3);
+      doc.line(130, y - 2, 190, y - 2);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(COLOR_SECONDARY[0], COLOR_SECONDARY[1], COLOR_SECONDARY[2]);
+      doc.text('TOTAL:', 140, y + 5);
+      doc.setFontSize(13);
+      doc.setTextColor(COLOR_ACCENT[0], COLOR_ACCENT[1], COLOR_ACCENT[2]);
+      doc.text(money(total), 190, y + 5, { align: 'right' });
+
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+        doc.setLineWidth(0.2);
+        doc.line(20, 280, 190, 280);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(COLOR_TEXT_LIGHT[0], COLOR_TEXT_LIGHT[1], COLOR_TEXT_LIGHT[2]);
+        doc.text('Multiservicios SP · Tel: (55) 1234-5678 · contacto@multiserviciossp.com', 20, 287);
+        doc.text('Página ' + i + ' de ' + pageCount, 170, 287);
+        doc.text('Cotización válida por 15 días', 105, 287, { align: 'center' });
       }
-      doc.text((idx + 1) + '. ' + c.desc.substring(0, 35), 16, y);
-      doc.text(c.cant.toString(), 125, y, { align: 'right' });
-      doc.text(money(c.precio), 150, y, { align: 'right' });
-      doc.text(money(c.importe), 185, y, { align: 'right' });
-      y += 7;
-    });
-
-    y += 4;
-    doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
-    doc.line(120, y - 2, 200, y - 2);
-    doc.setFillColor(COLOR_LIGHT_GRAY[0], COLOR_LIGHT_GRAY[1], COLOR_LIGHT_GRAY[2]);
-    doc.roundedRect(120, y, 78, 10, 2, 2, 'F');
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(COLOR_ACCENT[0], COLOR_ACCENT[1], COLOR_ACCENT[2]);
-    doc.text('TOTAL:', 125, y + 7);
-    doc.text(money(total), 185, y + 7, { align: 'right' });
-
-    doc.setTextColor(150, 150, 150);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.line(14, 275, 200, 275);
-    doc.text('Cotización válida por 15 días a partir de la fecha de emisión', 14, 280);
-    doc.text('Multiservicios SP', 14, 284);
 
       doc.save('Cotizacion_' + idCotizacion + '.pdf');
     } finally {
