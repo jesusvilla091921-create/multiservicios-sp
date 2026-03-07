@@ -144,28 +144,131 @@
       });
     }
 
-    const jsPDF = window.jspdf.jsPDF;
-    const doc = new jsPDF();
-    const conceptos = getConceptos();
-    const total = recalcTotal();
+    showCurtain('Generando PDF...');
+    try {
+      const jsPDF = window.jspdf.jsPDF;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+      const conceptos = getConceptos();
+      const total = recalcTotal();
+      const cliente = document.getElementById('cotCliente').value.trim();
+      const telefono = document.getElementById('cotTelefono').value.trim();
+      const servicio = document.getElementById('cotServicio').value.trim();
+      const direccion = document.getElementById('cotDireccion').value.trim();
+      const diagnostico = document.getElementById('cotDiagnostico').value.trim();
+      const fechaActual = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    doc.setFontSize(16);
-    doc.text('Multiservicios SP - Cotización', 14, 18);
-    doc.setFontSize(11);
-    doc.text('Cotización: ' + idCotizacion, 14, 28);
-    doc.text('Solicitud: MANUAL', 14, 35);
-    doc.text('Cliente: ' + document.getElementById('cotCliente').value, 14, 42);
-    doc.text('Servicio: ' + document.getElementById('cotServicio').value, 14, 49);
+    const COLOR_PRIMARY = [41, 128, 185];
+    const COLOR_SECONDARY = [52, 73, 94];
+    const COLOR_ACCENT = [46, 204, 113];
+    const COLOR_TEXT = [51, 51, 51];
+    const COLOR_LIGHT_GRAY = [236, 240, 241];
+    const COLOR_BORDER = [189, 195, 199];
 
-    let y = 60;
+    doc.setFillColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
+    doc.rect(0, 0, 216, 12, 'F');
+    doc.setFontSize(20);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MULTISERVICIOS SP', 14, 9);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('FOLIO: ' + idCotizacion, 162, 6);
+    doc.text(fechaActual, 162, 10);
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
+    doc.text('DATOS DEL CLIENTE', 14, 25);
+    doc.setDrawColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
+    doc.setLineWidth(0.5);
+    doc.line(14, 27, 200, 27);
+
+    doc.setFillColor(COLOR_LIGHT_GRAY[0], COLOR_LIGHT_GRAY[1], COLOR_LIGHT_GRAY[2]);
+    doc.roundedRect(14, 30, 90, 25, 2, 2, 'F');
+    doc.roundedRect(108, 30, 90, 25, 2, 2, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(COLOR_TEXT[0], COLOR_TEXT[1], COLOR_TEXT[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Cliente:', 18, 38);
+    doc.text('Teléfono:', 18, 46);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cliente, 40, 38);
+    doc.text(telefono, 40, 46);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Servicio:', 112, 38);
+    doc.text('Dirección:', 112, 46);
+    doc.setFont('helvetica', 'normal');
+    doc.text(servicio, 132, 38);
+    doc.text(direccion.substring(0, 25) + (direccion.length > 25 ? '...' : ''), 132, 46);
+
+    if (diagnostico) {
+      doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+      doc.roundedRect(14, 60, 184, 20, 2, 2, 'S');
+      doc.setFont('helvetica', 'bold');
+      doc.text('Diagnóstico:', 18, 68);
+      doc.setFont('helvetica', 'normal');
+      doc.text(diagnostico.substring(0, 70) + (diagnostico.length > 70 ? '...' : ''), 18, 75);
+    }
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
+    doc.text('CONCEPTOS Y SERVICIOS', 14, diagnostico ? 90 : 75);
+    doc.line(14, diagnostico ? 92 : 77, 200, diagnostico ? 92 : 77);
+
+    const startY = diagnostico ? 98 : 83;
+    doc.setFillColor(COLOR_SECONDARY[0], COLOR_SECONDARY[1], COLOR_SECONDARY[2]);
+    doc.rect(14, startY - 4, 184, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DESCRIPCIÓN', 16, startY);
+    doc.text('CANT', 120, startY);
+    doc.text('PRECIO UNIT.', 140, startY);
+    doc.text('IMPORTE', 175, startY);
+
+    doc.setTextColor(COLOR_TEXT[0], COLOR_TEXT[1], COLOR_TEXT[2]);
+    doc.setFont('helvetica', 'normal');
+    let y = startY + 6;
     conceptos.forEach(function (c, idx) {
-      doc.text((idx + 1) + '. ' + c.desc + ' | ' + c.cant + ' x ' + c.precio + ' = ' + c.importe, 14, y);
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      if (idx % 2 === 0) {
+        doc.setFillColor(COLOR_LIGHT_GRAY[0], COLOR_LIGHT_GRAY[1], COLOR_LIGHT_GRAY[2]);
+        doc.rect(14, y - 4, 184, 7, 'F');
+      }
+      doc.text((idx + 1) + '. ' + c.desc.substring(0, 35), 16, y);
+      doc.text(c.cant.toString(), 125, y, { align: 'right' });
+      doc.text(money(c.precio), 150, y, { align: 'right' });
+      doc.text(money(c.importe), 185, y, { align: 'right' });
       y += 7;
     });
-    y += 5;
-    doc.setFontSize(13);
-    doc.text('TOTAL: ' + money(total), 14, y);
-    doc.save(idCotizacion + '.pdf');
+
+    y += 4;
+    doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
+    doc.line(120, y - 2, 200, y - 2);
+    doc.setFillColor(COLOR_LIGHT_GRAY[0], COLOR_LIGHT_GRAY[1], COLOR_LIGHT_GRAY[2]);
+    doc.roundedRect(120, y, 78, 10, 2, 2, 'F');
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(COLOR_ACCENT[0], COLOR_ACCENT[1], COLOR_ACCENT[2]);
+    doc.text('TOTAL:', 125, y + 7);
+    doc.text(money(total), 185, y + 7, { align: 'right' });
+
+    doc.setTextColor(150, 150, 150);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.line(14, 275, 200, 275);
+    doc.text('Cotización válida por 15 días a partir de la fecha de emisión', 14, 280);
+    doc.text('Multiservicios SP', 14, 284);
+
+      doc.save('Cotizacion_' + idCotizacion + '.pdf');
+    } finally {
+      hideCurtain();
+    }
   }
 
   const wrap = document.getElementById('conceptosWrap');
